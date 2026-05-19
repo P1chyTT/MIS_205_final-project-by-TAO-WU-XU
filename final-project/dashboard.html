@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校园搭子拼单系统 - 主页</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 { font-size: 1.5rem; }
+        
+        .user-info { display: flex; align-items: center; gap: 1rem; }
+        
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .welcome-box {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .welcome-box h2 { color: #333; margin-bottom: 1rem; }
+        .welcome-box p { color: #666; margin-bottom: 0.5rem; }
+        .placeholder { color: #999; font-style: italic; margin-top: 2rem; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>校园搭子拼单系统</h1>
+        <div class="user-info">
+            <span id="userDisplay">加载中...</span>
+            <button class="logout-btn" onclick="doLogout()">退出登录</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="welcome-box">
+            <h2>欢迎来到校园搭子拼单系统！</h2>
+            <p id="welcomeMessage">正在加载用户信息...</p>
+            <p class="placeholder">更多功能开发中...</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        let sbClient = null;
+
+        window.onload = function() {
+            const url = localStorage.getItem('sbUrl');
+            const key = localStorage.getItem('sbKey');
+            
+            if (!url || !key) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            try {
+                sbClient = window.supabase.createClient(url, key);
+                checkAuth();
+            } catch (e) {
+                window.location.href = 'index.html';
+            }
+        };
+
+        async function checkAuth() {
+            const { data: { user } } = await sbClient.auth.getUser();
+            
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            const username = user.user_metadata?.username || user.email;
+            document.getElementById('userDisplay').textContent = username;
+            document.getElementById('welcomeMessage').textContent = username + '，你好！你已成功登录。';
+        }
+
+        async function doLogout() {
+            if (sbClient) {
+                await sbClient.auth.signOut();
+            }
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
