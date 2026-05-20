@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>校园搭子拼单系统 - 主页</title>
+    <title>校园搭子拼单系统</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
+            background: #f0f2f5;
             min-height: 100vh;
         }
-        
+
+        /* ===== Header ===== */
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -20,96 +21,586 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
-        
-        .header h1 { font-size: 1.5rem; }
-        
+        .header h1 { font-size: 1.4rem; }
         .user-info { display: flex; align-items: center; gap: 1rem; }
-        
         .logout-btn {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255,255,255,0.2);
             color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 0.5rem 1rem;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 0.4rem 1rem;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 0.9rem;
         }
-        
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
+        .logout-btn:hover { background: rgba(255,255,255,0.35); }
+
+        /* ===== Nav Tabs ===== */
+        .nav-tabs {
+            background: white;
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
             padding: 0 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
-        
-        .welcome-box {
+        .nav-tab {
+            padding: 0.9rem 1.5rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #888;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+        .nav-tab.active { color: #667eea; border-bottom-color: #667eea; }
+        .nav-tab:hover { color: #667eea; }
+
+        /* ===== Container ===== */
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* ===== Post Form ===== */
+        .post-form-section { display: none; }
+        .post-form-section.active { display: block; }
+
+        .form-card {
             background: white;
             padding: 2rem;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         }
-        
-        .welcome-box h2 { color: #333; margin-bottom: 1rem; }
-        .welcome-box p { color: #666; margin-bottom: 0.5rem; }
-        .placeholder { color: #999; font-style: italic; margin-top: 2rem; }
+        .form-card h2 { margin-bottom: 1.5rem; color: #333; font-size: 1.3rem; }
+
+        .type-toggle {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .type-btn {
+            flex: 1;
+            padding: 0.7rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            background: white;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #888;
+            transition: all 0.2s;
+        }
+        .type-btn.selected {
+            border-color: #667eea;
+            color: #667eea;
+            background: #f0f3ff;
+        }
+
+        .form-group { margin-bottom: 1rem; }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            color: #555;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+
+        .buddy-fields, .groupbuy-fields { display: none; }
+        .buddy-fields.show, .groupbuy-fields.show { display: block; }
+
+        .per-person {
+            background: #f0f3ff;
+            padding: 0.7rem 1rem;
+            border-radius: 6px;
+            color: #667eea;
+            font-weight: 600;
+            margin-top: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 0.8rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+        .submit-btn:hover { opacity: 0.92; }
+        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .toast {
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            text-align: center;
+            display: none;
+            font-size: 0.9rem;
+        }
+        .toast.error { background: #fee; color: #c33; display: block; }
+        .toast.success { background: #efe; color: #3c3; display: block; }
+
+        /* ===== Post List (广场) ===== */
+        .post-list-section { display: none; }
+        .post-list-section.active { display: block; }
+
+        .post-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 1rem;
+            transition: box-shadow 0.2s;
+        }
+        .post-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+
+        .post-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+        .post-card-title { font-size: 1.1rem; font-weight: 700; color: #333; }
+        .post-tag {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        .tag-buddy { background: #e8f5e9; color: #2e7d32; }
+        .tag-groupbuy { background: #fff3e0; color: #e65100; }
+        .tag-closed { background: #f5f5f5; color: #999; }
+
+        .post-card-meta {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .post-card-desc { color: #555; font-size: 0.9rem; margin-bottom: 0.75rem; line-height: 1.5; }
+
+        .post-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 0.75rem;
+            border-top: 1px solid #f0f0f0;
+        }
+        .people-badge {
+            font-size: 0.85rem;
+            color: #667eea;
+            font-weight: 600;
+        }
+        .people-badge.full { color: #e53935; }
+
+        .join-btn {
+            padding: 0.4rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: #667eea;
+            color: white;
+        }
+        .join-btn:hover { background: #5568d6; }
+        .join-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .join-btn.joined { background: #4caf50; }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #999;
+        }
+        .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 600px) {
+            .container { padding: 0 0.5rem; }
+            .header { padding: 0.8rem 1rem; }
+            .header h1 { font-size: 1.1rem; }
+            .nav-tabs { padding: 0 1rem; }
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>校园搭子拼单系统</h1>
+        <h1>🏫 校园搭子拼单</h1>
         <div class="user-info">
             <span id="userDisplay">加载中...</span>
-            <button class="logout-btn" onclick="doLogout()">退出登录</button>
-        </div>
-    </div>
-    
-    <div class="container">
-        <div class="welcome-box">
-            <h2>欢迎来到校园搭子拼单系统！</h2>
-            <p id="welcomeMessage">正在加载用户信息...</p>
-            <p class="placeholder">更多功能开发中...</p>
+            <button class="logout-btn" onclick="doLogout()">退出</button>
         </div>
     </div>
 
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="switchSection('square')">📋 帖子广场</button>
+        <button class="nav-tab" onclick="switchSection('create')">✏️ 发布帖子</button>
+    </div>
+
+    <div class="container">
+        <!-- ===== 帖子广场 ===== -->
+        <div id="squareSection" class="post-list-section active">
+            <div id="postList"></div>
+        </div>
+
+        <!-- ===== 发布帖子 ===== -->
+        <div id="createSection" class="post-form-section">
+            <div class="form-card">
+                <h2>发布新帖子</h2>
+
+                <div class="type-toggle">
+                    <button class="type-btn selected" onclick="setPostType('buddy')">👥 找搭子</button>
+                    <button class="type-btn" onclick="setPostType('groupbuy')">🛒 拼单</button>
+                </div>
+
+                <input type="hidden" id="postType" value="buddy">
+
+                <div class="form-group">
+                    <label>帖子标题 *</label>
+                    <input type="text" id="postTitle" placeholder="例如：找图书馆学习搭子">
+                </div>
+                <div class="form-group">
+                    <label>详细描述</label>
+                    <textarea id="postDesc" placeholder="描述你想找什么样的搭子或拼单详情..."></textarea>
+                </div>
+
+                <!-- 找搭子字段 -->
+                <div id="buddyFields" class="buddy-fields show">
+                    <div class="form-group">
+                        <label>地点</label>
+                        <input type="text" id="buddyLocation" placeholder="例如：琳恩图书馆 3 楼">
+                    </div>
+                    <div class="form-group">
+                        <label>见面时间</label>
+                        <input type="datetime-local" id="buddyTime">
+                    </div>
+                </div>
+
+                <!-- 拼单字段 -->
+                <div id="groupbuyFields" class="groupbuy-fields">
+                    <div class="form-group">
+                        <label>总消费金额 (元)</label>
+                        <input type="number" id="gbAmount" placeholder="例如：99.00" step="0.01" min="0">
+                    </div>
+                </div>
+
+                <!-- 通用字段 -->
+                <div class="form-group">
+                    <label>需要人数（含自己在内）</label>
+                    <input type="number" id="maxPeople" value="2" min="2" max="50">
+                </div>
+                <div id="perPersonDisplay" class="per-person" style="display:none"></div>
+
+                <button class="submit-btn" onclick="createPost()">发布帖子</button>
+                <div id="formToast" class="toast"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        let sbClient = null;
+        let sb = null;
+        let currentUser = null;
+        let myParticipations = new Set(); // 已参与的帖子 ID
 
-        window.onload = function() {
+        // ===== 初始化 =====
+        window.onload = async function() {
             const url = localStorage.getItem('sbUrl');
             const key = localStorage.getItem('sbKey');
-            
-            if (!url || !key) {
-                window.location.href = 'index.html';
-                return;
-            }
-            
+            if (!url || !key) { window.location.href = 'index.html'; return; }
+
             try {
-                sbClient = window.supabase.createClient(url, key);
-                checkAuth();
+                sb = window.supabase.createClient(url, key);
+                const { data: { user } } = await sb.auth.getUser();
+                if (!user) { window.location.href = 'index.html'; return; }
+                currentUser = user;
+
+                const username = user.user_metadata?.username || user.email;
+                document.getElementById('userDisplay').textContent = username;
+
+                await loadPosts();
+                await loadMyParticipations();
             } catch (e) {
                 window.location.href = 'index.html';
             }
         };
 
-        async function checkAuth() {
-            const { data: { user } } = await sbClient.auth.getUser();
-            
-            if (!user) {
-                window.location.href = 'index.html';
-                return;
-            }
-            
-            const username = user.user_metadata?.username || user.email;
-            document.getElementById('userDisplay').textContent = username;
-            document.getElementById('welcomeMessage').textContent = username + '，你好！你已成功登录。';
+        // ===== 导航切换 =====
+        function switchSection(section) {
+            document.querySelectorAll('.nav-tab').forEach((t, i) => {
+                t.classList.toggle('active', (section === 'square' && i === 0) || (section === 'create' && i === 1));
+            });
+            document.getElementById('squareSection').classList.toggle('active', section === 'square');
+            document.getElementById('createSection').classList.toggle('active', section === 'create');
+
+            if (section === 'square') loadPosts();
         }
 
-        async function doLogout() {
-            if (sbClient) {
-                await sbClient.auth.signOut();
+        // ===== 帖子类型切换 =====
+        function setPostType(type) {
+            document.getElementById('postType').value = type;
+            document.querySelectorAll('.type-btn').forEach((btn, i) => {
+                btn.classList.toggle('selected', (type === 'buddy' && i === 0) || (type === 'groupbuy' && i === 1));
+            });
+            document.getElementById('buddyFields').classList.toggle('show', type === 'buddy');
+            document.getElementById('groupbuyFields').classList.toggle('show', type === 'groupbuy');
+            updatePerPerson();
+        }
+
+        // ===== 实时计算人均金额 =====
+        document.addEventListener('input', function(e) {
+            if (e.target.id === 'gbAmount' || e.target.id === 'maxPeople') {
+                updatePerPerson();
             }
+        });
+
+        function updatePerPerson() {
+            const type = document.getElementById('postType').value;
+            const el = document.getElementById('perPersonDisplay');
+            if (type !== 'groupbuy') { el.style.display = 'none'; return; }
+
+            const amount = parseFloat(document.getElementById('gbAmount').value) || 0;
+            const people = parseInt(document.getElementById('maxPeople').value) || 1;
+            if (amount > 0 && people > 0) {
+                el.style.display = 'block';
+                el.textContent = `💡 人均费用：¥${(amount / people).toFixed(2)}`;
+            } else {
+                el.style.display = 'none';
+            }
+        }
+
+        // ===== Toast 消息 =====
+        function showFormToast(text, isError) {
+            const el = document.getElementById('formToast');
+            el.textContent = text;
+            el.className = isError ? 'toast error' : 'toast success';
+            setTimeout(() => { el.className = 'toast'; }, 3000);
+        }
+
+        // ===== 创建帖子 =====
+        async function createPost() {
+            const type = document.getElementById('postType').value;
+            const title = document.getElementById('postTitle').value.trim();
+            const description = document.getElementById('postDesc').value.trim();
+            const maxPeople = parseInt(document.getElementById('maxPeople').value) || 2;
+
+            if (!title) { showFormToast('请输入帖子标题', true); return; }
+
+            const username = currentUser.user_metadata?.username || currentUser.email;
+            const postData = {
+                user_id: currentUser.id,
+                author_name: username,
+                type: type,
+                title: title,
+                description: description || null,
+                max_people: maxPeople,
+                current_people: 1,
+                status: 'open'
+            };
+
+            if (type === 'buddy') {
+                postData.location = document.getElementById('buddyLocation').value.trim() || null;
+                postData.meet_time = document.getElementById('buddyTime').value || null;
+                postData.total_amount = null;
+            } else {
+                postData.location = null;
+                postData.meet_time = null;
+                const amt = parseFloat(document.getElementById('gbAmount').value);
+                postData.total_amount = amt > 0 ? amt : null;
+            }
+
+            const { error } = await sb.from('posts').insert([postData]);
+            if (error) { showFormToast('发布失败: ' + error.message, true); return; }
+
+            // 清空表单
+            document.getElementById('postTitle').value = '';
+            document.getElementById('postDesc').value = '';
+            document.getElementById('buddyLocation').value = '';
+            document.getElementById('buddyTime').value = '';
+            document.getElementById('gbAmount').value = '';
+            document.getElementById('maxPeople').value = '2';
+            document.getElementById('perPersonDisplay').style.display = 'none';
+
+            showFormToast('发布成功！', false);
+            switchSection('square');
+        }
+
+        // ===== 加载我的参与记录 =====
+        async function loadMyParticipations() {
+            if (!currentUser) return;
+            const { data, error } = await sb.from('participations')
+                .select('post_id')
+                .eq('user_id', currentUser.id);
+            if (!error && data) {
+                myParticipations = new Set(data.map(r => r.post_id));
+            }
+        }
+
+        // ===== 加载帖子列表 =====
+        async function loadPosts() {
+            const container = document.getElementById('postList');
+
+            const { data: posts, error } = await sb.from('posts')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                container.innerHTML = `<div class="empty-state"><div class="icon">❌</div>加载失败: ${error.message}</div>`;
+                return;
+            }
+
+            if (!posts || posts.length === 0) {
+                container.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>还没有帖子，去发布第一个吧！</p></div>`;
+                return;
+            }
+
+            let html = '';
+            for (const post of posts) {
+                const isMine = post.user_id === currentUser.id;
+                const isJoined = myParticipations.has(post.id);
+                const isFull = post.current_people >= post.max_people;
+                const isClosed = post.status === 'closed';
+
+                let tagClass = 'post-tag ';
+                let tagText = '';
+                if (isClosed) {
+                    tagClass += 'tag-closed';
+                    tagText = '已结束';
+                } else if (post.type === 'buddy') {
+                    tagClass += 'tag-buddy';
+                    tagText = '找搭子';
+                } else {
+                    tagClass += 'tag-groupbuy';
+                    tagText = '拼单';
+                }
+
+                // 拼单人均
+                let perPersonHTML = '';
+                if (post.type === 'groupbuy' && post.total_amount) {
+                    const perPerson = (post.total_amount / post.max_people).toFixed(2);
+                    perPersonHTML = `<span>💰 人均 ¥${perPerson}</span>`;
+                }
+
+                // 搭子信息
+                let buddyInfoHTML = '';
+                if (post.type === 'buddy') {
+                    if (post.location) buddyInfoHTML += `<span>📍 ${escHtml(post.location)}</span>`;
+                    if (post.meet_time) {
+                        const dt = new Date(post.meet_time);
+                        buddyInfoHTML += `<span>🕐 ${dt.toLocaleString('zh-CN')}</span>`;
+                    }
+                }
+
+                // 参与按钮
+                let buttonHTML = '';
+                if (isMine) {
+                    buttonHTML = `<button class="join-btn joined" disabled>我的帖子</button>`;
+                } else if (isClosed || isFull) {
+                    buttonHTML = `<button class="join-btn" disabled>已满员</button>`;
+                } else if (isJoined) {
+                    buttonHTML = `<button class="join-btn joined" onclick="leavePost(${post.id})">已参与 ✓</button>`;
+                } else {
+                    buttonHTML = `<button class="join-btn" onclick="joinPost(${post.id})">参与</button>`;
+                }
+
+                html += `
+                <div class="post-card">
+                    <div class="post-card-header">
+                        <span class="post-card-title">${escHtml(post.title)}</span>
+                        <span class="${tagClass}">${tagText}</span>
+                    </div>
+                    <div class="post-card-meta">
+                        <span>👤 ${escHtml(post.author_name)}</span>
+                        ${buddyInfoHTML}
+                        ${perPersonHTML}
+                        <span>📅 ${new Date(post.created_at).toLocaleString('zh-CN')}</span>
+                    </div>
+                    ${post.description ? `<div class="post-card-desc">${escHtml(post.description)}</div>` : ''}
+                    <div class="post-card-footer">
+                        <span class="people-badge ${isFull ? 'full' : ''}">👥 ${post.current_people} / ${post.max_people}</span>
+                        ${buttonHTML}
+                    </div>
+                </div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // ===== 参与帖子 =====
+        async function joinPost(postId) {
+            const { error } = await sb.from('participations').insert([{
+                post_id: postId,
+                user_id: currentUser.id
+            }]);
+
+            if (error) {
+                alert('参与失败: ' + error.message);
+                return;
+            }
+
+            // 更新帖子的参与人数
+            await sb.rpc('increment_participants', { post_id_param: postId });
+
+            myParticipations.add(postId);
+            await loadPosts();
+        }
+
+        // ===== 退出帖子 =====
+        async function leavePost(postId) {
+            const { error } = await sb.from('participations')
+                .delete()
+                .eq('post_id', postId)
+                .eq('user_id', currentUser.id);
+
+            if (error) {
+                alert('退出失败: ' + error.message);
+                return;
+            }
+
+            // 更新帖子的参与人数
+            await sb.rpc('decrement_participants', { post_id_param: postId });
+
+            myParticipations.delete(postId);
+            await loadPosts();
+        }
+
+        // ===== 登出 =====
+        async function doLogout() {
+            if (sb) await sb.auth.signOut();
             window.location.href = 'index.html';
+        }
+
+        // ===== HTML 转义 =====
+        function escHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
         }
     </script>
 </body>
