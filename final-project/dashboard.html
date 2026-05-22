@@ -232,6 +232,33 @@
         .join-btn:disabled { background: #ccc; cursor: not-allowed; }
         .join-btn.joined { background: #4caf50; }
 
+        .post-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .edit-btn {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid #667eea;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: white;
+            color: #667eea;
+        }
+        .edit-btn:hover { background: #f0f3ff; }
+        .delete-btn {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid #e53935;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: white;
+            color: #e53935;
+        }
+        .delete-btn:hover { background: #ffebee; }
+
         .empty-state {
             text-align: center;
             padding: 3rem;
@@ -268,10 +295,11 @@
             <div id="postList"></div>
         </div>
 
-        <!-- ===== 发布帖子 ===== -->
+        <!-- ===== 发布/编辑帖子 ===== -->
         <div id="createSection" class="post-form-section">
             <div class="form-card">
-                <h2>发布新帖子</h2>
+                <h2 id="formTitle">发布新帖子</h2>
+                <input type="hidden" id="editingPostId" value="">
 
                 <div class="type-toggle">
                     <button class="type-btn selected" onclick="setPostType('buddy')">👥 找搭子</button>
@@ -316,7 +344,7 @@
                 </div>
                 <div id="perPersonDisplay" class="per-person" style="display:none"></div>
 
-                <button class="submit-btn" onclick="createPost()">发布帖子</button>
+                <button class="submit-btn" id="submitBtn" onclick="submitPost()">发布帖子</button>
                 <div id="formToast" class="toast"></div>
             </div>
         </div>
@@ -328,6 +356,8 @@
         let sb = null;
         let currentUser = null;
         let myParticipations = new Set(); // 已参与的帖子 ID
+        let isEditing = false;
+        let editingPost = null;
 
         // ===== 初始化 =====
         window.onload = async function() {
@@ -359,7 +389,29 @@
             document.getElementById('squareSection').classList.toggle('active', section === 'square');
             document.getElementById('createSection').classList.toggle('active', section === 'create');
 
-            if (section === 'square') loadPosts();
+            if (section === 'square') {
+                loadPosts();
+                resetForm();
+            } else {
+                if (!isEditing) resetForm();
+            }
+        }
+
+        // ===== 重置表单 =====
+        function resetForm() {
+            isEditing = false;
+            editingPost = null;
+            document.getElementById('formTitle').textContent = '发布新帖子';
+            document.getElementById('submitBtn').textContent = '发布帖子';
+            document.getElementById('editingPostId').value = '';
+            document.getElementById('postTitle').value = '';
+            document.getElementById('postDesc').value = '';
+            document.getElementById('buddyLocation').value = '';
+            document.getElementById('buddyTime').value = '';
+            document.getElementById('gbAmount').value = '';
+            document.getElementById('maxPeople').value = '2';
+            document.getElementById('perPersonDisplay').style.display = 'none';
+            setPostType('buddy');
         }
 
         // ===== 帖子类型切换 =====
@@ -403,6 +455,15 @@
             setTimeout(() => { el.className = 'toast'; }, 3000);
         }
 
+        // ===== 提交帖子（新增或更新）=====
+        async function submitPost() {
+            if (isEditing) {
+                await updatePost();
+            } else {
+                await createPost();
+            }
+        }
+
         // ===== 创建帖子 =====
         async function createPost() {
             const type = document.getElementById('postType').value;
@@ -438,16 +499,47 @@
             const { error } = await sb.from('posts').insert([postData]);
             if (error) { showFormToast('发布失败: ' + error.message, true); return; }
 
-            // 清空表单
-            document.getElementById('postTitle').value = '';
-            document.getElementById('postDesc').value = '';
-            document.getElementById('buddyLocation').value = '';
-            document.getElementById('buddyTime').value = '';
-            document.getElementById('gbAmount').value = '';
-            document.getElementById('maxPeople').value = '2';
-            document.getElementById('perPersonDisplay').style.display = 'none';
-
             showFormToast('发布成功！', false);
+            switchSection('square');
+        }
+
+        // ===== 更新帖子 =====
+        async function updatePost() {
+            const type = document.getElementById('postType').value;
+            const title = document.getElementById('postTitle').value.trim();
+            const description = document.getElementById('postDesc').value.trim();
+            const maxPeople = parseInt(document.getElementById('maxPeople').value) || 2;
+            const postId = parseInt(document.getElementById('editingPostId').value);
+
+            if (!title) { showFormToast('请输入帖子标题', true); return; }
+            if (!postId) { showFormToast('编辑错误，请重试', true); return; }
+
+            const postData = {
+                type: type,
+                title: title,
+                description: description || null,
+                max_people: maxPeople
+            };
+
+            if (type === 'buddy') {
+                postData.location = document.getElementById('buddyLocation').value.trim() || null;
+                postData.meet_time = document.getElementById('buddyTime').value || null;
+                postData.total_amount = null;
+            } else {
+                postData.location = null;
+                postData.meet_time = null;
+                const amt = parseFloat(document.getElementById('gbAmount').value);
+                postData.total_amount = amt > 0 ? amt : null;
+            }
+
+            const { error } = await sb.from('posts')
+                .update(postData)
+                .eq('id', postId)
+                .eq('user_id', currentUser.id);
+
+            if (error) { showFormToast('更新失败: ' + error.message, true); return; }
+
+            showFormToast('更新成功！', false);
             switchSection('square');
         }
 
@@ -517,10 +609,14 @@
                     }
                 }
 
-                // 参与按钮
+                // 参与按钮或编辑/删除按钮
                 let buttonHTML = '';
                 if (isMine) {
-                    buttonHTML = `<button class="join-btn joined" disabled>我的帖子</button>`;
+                    buttonHTML = `
+                        <div class="post-actions">
+                            <button class="edit-btn" onclick="editPost(${post.id})">编辑</button>
+                            <button class="delete-btn" onclick="deletePost(${post.id})">删除</button>
+                        </div>`;
                 } else if (isClosed || isFull) {
                     buttonHTML = `<button class="join-btn" disabled>已满员</button>`;
                 } else if (isJoined) {
@@ -587,6 +683,59 @@
             await sb.rpc('decrement_participants', { post_id_param: postId });
 
             myParticipations.delete(postId);
+            await loadPosts();
+        }
+
+        // ===== 编辑帖子 =====
+        async function editPost(postId) {
+            // 获取帖子详情
+            const { data: post, error } = await sb.from('posts')
+                .select('*')
+                .eq('id', postId)
+                .eq('user_id', currentUser.id)
+                .single();
+
+            if (error || !post) {
+                alert('加载帖子失败: ' + (error?.message || '未找到'));
+                return;
+            }
+
+            // 填充表单
+            isEditing = true;
+            editingPost = post;
+            document.getElementById('formTitle').textContent = '编辑帖子';
+            document.getElementById('submitBtn').textContent = '保存修改';
+            document.getElementById('editingPostId').value = post.id;
+            document.getElementById('postTitle').value = post.title;
+            document.getElementById('postDesc').value = post.description || '';
+            document.getElementById('maxPeople').value = post.max_people;
+
+            setPostType(post.type);
+            if (post.type === 'buddy') {
+                document.getElementById('buddyLocation').value = post.location || '';
+                document.getElementById('buddyTime').value = post.meet_time || '';
+            } else {
+                document.getElementById('gbAmount').value = post.total_amount || '';
+            }
+
+            // 切换到表单页面
+            switchSection('create');
+        }
+
+        // ===== 删除帖子 =====
+        async function deletePost(postId) {
+            if (!confirm('确定要删除这个帖子吗？此操作无法撤销。')) return;
+
+            const { error } = await sb.from('posts')
+                .delete()
+                .eq('id', postId)
+                .eq('user_id', currentUser.id);
+
+            if (error) {
+                alert('删除失败: ' + error.message);
+                return;
+            }
+
             await loadPosts();
         }
 
