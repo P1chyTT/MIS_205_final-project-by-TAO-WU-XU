@@ -42,7 +42,8 @@ CREATE TABLE IF NOT EXISTS posts (
     -- 通用字段
     max_people      INT NOT NULL DEFAULT 2,
     current_people  INT NOT NULL DEFAULT 1,
-    status          VARCHAR(10) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed', 'completed', 'finished')),
+    deadline        TIMESTAMPTZ,                          -- 截止时间（超过后自动取消）
+    status          VARCHAR(10) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed', 'completed', 'finished', 'cancelled')),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -60,6 +61,7 @@ CREATE TABLE IF NOT EXISTS participations (
 CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id);
 CREATE INDEX IF NOT EXISTS idx_posts_status ON posts(status);
 CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_posts_deadline ON posts(deadline);
 CREATE INDEX IF NOT EXISTS idx_participations_post_id ON participations(post_id);
 CREATE INDEX IF NOT EXISTS idx_participations_user_id ON participations(user_id);
 
@@ -136,7 +138,7 @@ CREATE POLICY "用户可删除自己的收藏" ON favorites
 CREATE TABLE IF NOT EXISTS notifications (
     id          SERIAL PRIMARY KEY,
     user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    type        VARCHAR(20) NOT NULL CHECK (type IN ('join', 'leave', 'full', 'bill', 'confirm', 'system')),
+    type        VARCHAR(20) NOT NULL CHECK (type IN ('join', 'leave', 'full', 'bill', 'confirm', 'system', 'expired')),
     title       VARCHAR(100) NOT NULL,
     content     TEXT,
     post_id     INT REFERENCES posts(id) ON DELETE CASCADE,
@@ -306,7 +308,55 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 14. 存储函数：参与者确认完成
+-- 14. 存储函数：检查并处理过期帖子（超过 deadline 且未完成的帖子自动取消）
+CREATE OR REPLACE FUNCTION check_expired_posts()
+RETURNS VOID AS $$
+DECLARE
+    expired_post RECORD;
+    author_name_val VARCHAR(50);
+BEGIN
+    FOR expired_post IN
+        SELECT p.id, p.user_id, p.title, p.type, p.deadline
+        FROM posts p
+        WHERE p.deadline IS NOT NULL
+          AND p.deadline <= NOW()
+          AND p.status IN ('open', 'closed')
+    LOOP
+        -- 获取作者名
+        SELECT username INTO author_name_val
+        FROM profiles WHERE id = expired_post.user_id;
+
+        -- 更新帖子状态为已取消
+        UPDATE posts SET status = 'cancelled' WHERE id = expired_post.id;
+
+        -- 通知帖子作者
+        INSERT INTO notifications (user_id, type, title, content, post_id)
+        VALUES (
+            expired_post.user_id,
+            'expired',
+            '帖子已过期取消',
+            '你的「' || expired_post.title || '」因超过截止时间（' ||
+            TO_CHAR(expired_post.deadline, 'YYYY-MM-DD HH24:MI') ||
+            '）且人数未满，已自动取消。',
+            expired_post.id
+        );
+
+        -- 通知所有参与者
+        INSERT INTO notifications (user_id, type, title, content, post_id)
+        SELECT
+            pt.user_id,
+            'expired',
+            '参与的帖子已过期取消',
+            '你参与的「' || expired_post.title || '」因超过截止时间且人数未满，已自动取消。',
+            expired_post.id
+        FROM participations pt
+        WHERE pt.post_id = expired_post.id
+          AND pt.user_id != expired_post.user_id;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 15. 存储函数：参与者确认完成
 CREATE OR REPLACE FUNCTION confirm_participation(post_id_param INT, user_id_param UUID)
 RETURNS VOID AS $$
 DECLARE

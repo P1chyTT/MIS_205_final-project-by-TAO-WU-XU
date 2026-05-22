@@ -465,6 +465,7 @@
                         <option value="closed">已满员</option>
                         <option value="completed">待确认</option>
                         <option value="finished">已完成</option>
+                        <option value="cancelled">已取消</option>
                     </select>
                 </div>
                 <div class="filter-group" id="amountFilterGroup" style="display:none">
@@ -554,6 +555,11 @@
 
                 <!-- 通用字段 -->
                 <div class="form-group">
+                    <label>截止时间 *</label>
+                    <input type="datetime-local" id="postDeadline">
+                    <small style="color:#888;font-size:0.8rem">超过截止时间后人数未满，帖子将自动取消</small>
+                </div>
+                <div class="form-group">
                     <label>需要人数（含自己在内）</label>
                     <input type="number" id="maxPeople" value="2" min="2" max="50">
                 </div>
@@ -634,6 +640,7 @@
             document.getElementById('buddyLocation').value = '';
             document.getElementById('buddyTime').value = '';
             document.getElementById('gbAmount').value = '';
+            document.getElementById('postDeadline').value = '';
             document.getElementById('maxPeople').value = '2';
             document.getElementById('perPersonDisplay').style.display = 'none';
             setPostType('buddy');
@@ -711,7 +718,8 @@
 
             if (type === 'buddy') {
                 postData.location = document.getElementById('buddyLocation').value.trim() || null;
-                postData.meet_time = document.getElementById('buddyTime').value || null;
+                const meetTimeVal = document.getElementById('buddyTime').value;
+                postData.meet_time = meetTimeVal ? new Date(meetTimeVal).toISOString() : null;
                 postData.total_amount = null;
             } else {
                 postData.location = null;
@@ -719,6 +727,11 @@
                 const amt = parseFloat(document.getElementById('gbAmount').value);
                 postData.total_amount = amt > 0 ? amt : null;
             }
+
+            // 截止时间（转为带时区的 ISO 字符串，避免 UTC 偏移问题）
+            const deadlineVal = document.getElementById('postDeadline').value;
+            if (!deadlineVal) { showFormToast('请选择截止时间', true); return; }
+            postData.deadline = new Date(deadlineVal).toISOString();
 
             const { error } = await sb.from('posts').insert([postData]);
             if (error) { showFormToast('发布失败: ' + error.message, true); return; }
@@ -748,7 +761,8 @@
 
             if (type === 'buddy') {
                 postData.location = document.getElementById('buddyLocation').value.trim() || null;
-                postData.meet_time = document.getElementById('buddyTime').value || null;
+                const meetTimeVal2 = document.getElementById('buddyTime').value;
+                postData.meet_time = meetTimeVal2 ? new Date(meetTimeVal2).toISOString() : null;
                 postData.total_amount = null;
             } else {
                 postData.location = null;
@@ -756,6 +770,11 @@
                 const amt = parseFloat(document.getElementById('gbAmount').value);
                 postData.total_amount = amt > 0 ? amt : null;
             }
+
+            // 截止时间（转为带时区的 ISO 字符串，避免 UTC 偏移问题）
+            const deadlineVal2 = document.getElementById('postDeadline').value;
+            if (!deadlineVal2) { showFormToast('请选择截止时间', true); return; }
+            postData.deadline = new Date(deadlineVal2).toISOString();
 
             const { error } = await sb.from('posts')
                 .update(postData)
@@ -846,8 +865,12 @@
             if (sort === 'newest') {
                 filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
             } else if (sort === 'deadline') {
-                // 按剩余名额排序（少的优先）
-                filtered.sort((a, b) => (a.max_people - a.current_people) - (b.max_people - b.current_people));
+                // 按截止时间排序（近的优先）
+                filtered.sort((a, b) => {
+                    const da = a.deadline ? new Date(a.deadline) : new Date('2099-01-01');
+                    const db = b.deadline ? new Date(b.deadline) : new Date('2099-01-01');
+                    return da - db;
+                });
             } else if (sort === 'amount_asc') {
                 filtered.sort((a, b) => (a.total_amount || 0) - (b.total_amount || 0));
             } else if (sort === 'amount_desc') {
@@ -883,11 +906,15 @@
                 const isClosed = post.status === 'closed';
                 const isCompleted = post.status === 'completed';
                 const isFinished = post.status === 'finished';
+                const isCancelled = post.status === 'cancelled';
                 const isConfirmed = myConfirmedPosts.has(post.id);
 
                 let tagClass = 'post-tag ';
                 let tagText = '';
-                if (isFinished) {
+                if (isCancelled) {
+                    tagClass += 'tag-closed';
+                    tagText = '已取消';
+                } else if (isFinished) {
                     tagClass += 'tag-closed';
                     tagText = '已结束';
                 } else if (isCompleted) {
@@ -919,13 +946,22 @@
                         buddyInfoHTML += `<span>🕐 ${dt.toLocaleString('zh-CN')}</span>`;
                     }
                 }
+                // 截止时间
+                if (post.deadline) {
+                    const dl = new Date(post.deadline);
+                    const isExpired = dl <= new Date();
+                    const dlColor = isExpired ? '#e53935' : '#667eea';
+                    buddyInfoHTML += `<span style="color:${dlColor}">⏰ 截止 ${dl.toLocaleString('zh-CN')}</span>`;
+                }
 
                 // 参与按钮或编辑/删除按钮
                 let buttonHTML = '';
                 const isFav = myFavorites.has(post.id);
                 if (isMine) {
                     // 发起人按钮逻辑
-                    if (isClosed && !isCompleted && !isFinished) {
+                    if (isCancelled) {
+                        buttonHTML = `<span class="status-finished">已取消</span>`;
+                    } else if (isClosed && !isCompleted && !isFinished) {
                         buttonHTML = `<button class="complete-btn" onclick="completeOrder(${post.id})">✓ 订单完成</button>`;
                     } else if (isCompleted || isFinished) {
                         buttonHTML = `<span class="status-completed">${isFinished ? '已完成' : '待确认'}</span>`;
@@ -938,7 +974,9 @@
                     }
                 } else {
                     let joinBtn = '';
-                    if (isFinished) {
+                    if (isCancelled) {
+                        joinBtn = `<span class="status-finished">已取消</span>`;
+                    } else if (isFinished) {
                         joinBtn = `<span class="status-finished">已结束</span>`;
                     } else if (isCompleted) {
                         if (isConfirmed) {
@@ -1062,6 +1100,7 @@
             } else {
                 document.getElementById('gbAmount').value = post.total_amount || '';
             }
+            document.getElementById('postDeadline').value = post.deadline ? post.deadline.slice(0, 16) : '';
 
             switchSection('create');
             // 清除URL参数
