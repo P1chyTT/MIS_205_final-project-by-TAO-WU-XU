@@ -348,12 +348,78 @@
         }
         .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
 
+        /* ===== Filter Bar ===== */
+        .filter-bar {
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+        }
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .filter-group label {
+            font-size: 0.85rem;
+            color: #666;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .filter-group select, .filter-group input {
+            padding: 0.4rem 0.6rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            background: white;
+            color: #333;
+        }
+        .filter-group select:focus, .filter-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .filter-btn {
+            padding: 0.4rem 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .filter-btn:hover { opacity: 0.92; }
+        .reset-btn {
+            padding: 0.4rem 1rem;
+            background: #f5f5f5;
+            color: #666;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .reset-btn:hover { background: #eee; }
+        .result-count {
+            font-size: 0.85rem;
+            color: #888;
+            margin-left: auto;
+        }
+
         /* ===== Responsive ===== */
         @media (max-width: 600px) {
             .container { padding: 0 0.5rem; }
             .header { padding: 0.8rem 1rem; }
             .header h1 { font-size: 1.1rem; }
             .nav-tabs { padding: 0 1rem; }
+            .filter-bar { flex-direction: column; align-items: stretch; }
+            .filter-group { width: 100%; }
+            .filter-group select, .filter-group input { flex: 1; }
+            .result-count { margin-left: 0; text-align: center; }
         }
     </style>
 </head>
@@ -378,6 +444,69 @@
     <div class="container">
         <!-- ===== 帖子广场 ===== -->
         <div id="squareSection" class="post-list-section active">
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>🔍</label>
+                    <input type="text" id="searchKeyword" placeholder="搜索标题/描述..." oninput="applyFilters()">
+                </div>
+                <div class="filter-group">
+                    <label>类型</label>
+                    <select id="filterType" onchange="applyFilters()">
+                        <option value="">全部</option>
+                        <option value="buddy">找搭子</option>
+                        <option value="groupbuy">拼单</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>状态</label>
+                    <select id="filterStatus" onchange="applyFilters()">
+                        <option value="">全部</option>
+                        <option value="open">招募中</option>
+                        <option value="closed">已满员</option>
+                        <option value="completed">待确认</option>
+                        <option value="finished">已完成</option>
+                    </select>
+                </div>
+                <div class="filter-group" id="amountFilterGroup" style="display:none">
+                    <label>金额</label>
+                    <select id="filterAmount" onchange="applyFilters()">
+                        <option value="">全部</option>
+                        <option value="0-50">¥0-50</option>
+                        <option value="50-100">¥50-100</option>
+                        <option value="100+">¥100+</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>时间</label>
+                    <select id="filterTime" onchange="applyFilters()">
+                        <option value="">全部</option>
+                        <option value="today">今天</option>
+                        <option value="3days">最近3天</option>
+                        <option value="7days">最近7天</option>
+                        <option value="earlier">更早</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>人数</label>
+                    <select id="filterPeople" onchange="applyFilters()">
+                        <option value="">全部</option>
+                        <option value="2">2人</option>
+                        <option value="3-5">3-5人</option>
+                        <option value="5+">5人以上</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>排序</label>
+                    <select id="filterSort" onchange="applyFilters()">
+                        <option value="newest">最新发布</option>
+                        <option value="deadline">即将截止</option>
+                        <option value="amount_asc">金额低→高</option>
+                        <option value="amount_desc">金额高→低</option>
+                    </select>
+                </div>
+                <button class="reset-btn" onclick="resetFilters()">重置</button>
+                <span class="result-count" id="resultCount"></span>
+            </div>
             <div id="postList"></div>
         </div>
 
@@ -444,6 +573,7 @@
         let myParticipations = new Set(); // 已参与的帖子 ID
         let isEditing = false;
         let editingPost = null;
+        let allPosts = []; // 存储所有帖子用于筛选
 
         // ===== 初始化 =====
         window.onload = async function() {
@@ -650,19 +780,85 @@
 
         // ===== 加载帖子列表 =====
         async function loadPosts() {
-            const container = document.getElementById('postList');
-
             const { data: posts, error } = await sb.from('posts')
                 .select('*')
                 .order('created_at', { ascending: false });
 
             if (error) {
-                container.innerHTML = `<div class="empty-state"><div class="icon">❌</div>加载失败: ${error.message}</div>`;
+                document.getElementById('postList').innerHTML = `<div class="empty-state"><div class="icon">❌</div>加载失败: ${error.message}</div>`;
                 return;
             }
 
-            if (!posts || posts.length === 0) {
-                container.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>还没有帖子，去发布第一个吧！</p></div>`;
+            allPosts = posts || [];
+            applyFilters();
+        }
+
+        // ===== 应用筛选 =====
+        async function applyFilters() {
+            const container = document.getElementById('postList');
+            const keyword = document.getElementById('searchKeyword').value.trim().toLowerCase();
+            const type = document.getElementById('filterType').value;
+            const status = document.getElementById('filterStatus').value;
+            const amount = document.getElementById('filterAmount').value;
+            const time = document.getElementById('filterTime').value;
+            const people = document.getElementById('filterPeople').value;
+            const sort = document.getElementById('filterSort').value;
+
+            // 显示/隐藏金额筛选（仅拼单类型）
+            document.getElementById('amountFilterGroup').style.display = type === 'buddy' ? 'none' : 'flex';
+
+            let filtered = allPosts.filter(post => {
+                // 关键词搜索
+                if (keyword) {
+                    const text = (post.title + ' ' + (post.description || '')).toLowerCase();
+                    if (!text.includes(keyword)) return false;
+                }
+                // 类型筛选
+                if (type && post.type !== type) return false;
+                // 状态筛选
+                if (status && post.status !== status) return false;
+                // 金额筛选
+                if (amount && post.type === 'groupbuy' && post.total_amount) {
+                    if (amount === '0-50' && post.total_amount > 50) return false;
+                    if (amount === '50-100' && (post.total_amount <= 50 || post.total_amount > 100)) return false;
+                    if (amount === '100+' && post.total_amount <= 100) return false;
+                }
+                // 时间筛选
+                if (time) {
+                    const postDate = new Date(post.created_at);
+                    const now = new Date();
+                    const diffDays = (now - postDate) / (1000 * 60 * 60 * 24);
+                    if (time === 'today' && diffDays > 1) return false;
+                    if (time === '3days' && diffDays > 3) return false;
+                    if (time === '7days' && diffDays > 7) return false;
+                    if (time === 'earlier' && diffDays <= 7) return false;
+                }
+                // 人数筛选
+                if (people) {
+                    if (people === '2' && post.max_people !== 2) return false;
+                    if (people === '3-5' && (post.max_people < 3 || post.max_people > 5)) return false;
+                    if (people === '5+' && post.max_people <= 5) return false;
+                }
+                return true;
+            });
+
+            // 排序
+            if (sort === 'newest') {
+                filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            } else if (sort === 'deadline') {
+                // 按剩余名额排序（少的优先）
+                filtered.sort((a, b) => (a.max_people - a.current_people) - (b.max_people - b.current_people));
+            } else if (sort === 'amount_asc') {
+                filtered.sort((a, b) => (a.total_amount || 0) - (b.total_amount || 0));
+            } else if (sort === 'amount_desc') {
+                filtered.sort((a, b) => (b.total_amount || 0) - (a.total_amount || 0));
+            }
+
+            // 更新结果数量
+            document.getElementById('resultCount').textContent = `共 ${filtered.length} 条`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>没有找到符合条件的帖子</p></div>`;
                 return;
             }
 
@@ -680,7 +876,7 @@
             }
 
             let html = '';
-            for (const post of posts) {
+            for (const post of filtered) {
                 const isMine = post.user_id === currentUser.id;
                 const isJoined = myParticipations.has(post.id);
                 const isFull = post.current_people >= post.max_people;
@@ -784,6 +980,19 @@
             }
 
             container.innerHTML = html;
+        }
+
+        // ===== 重置筛选 =====
+        function resetFilters() {
+            document.getElementById('searchKeyword').value = '';
+            document.getElementById('filterType').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterAmount').value = '';
+            document.getElementById('filterTime').value = '';
+            document.getElementById('filterPeople').value = '';
+            document.getElementById('filterSort').value = 'newest';
+            document.getElementById('amountFilterGroup').style.display = 'none';
+            applyFilters();
         }
 
         // ===== 参与帖子 =====
