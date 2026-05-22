@@ -9,5 +9,8 @@
   "compaction": {
     "enabled": true,
     "thresholdTokens": 80000
-  }
+  },
+  "packages": [
+    "npm:pi-web-access"
+  ]
 }
