@@ -1,41 +1,8 @@
-# Environment variables (contains API keys!)
 .env
-.env.*
-
-# Dependencies
 node_modules/
-
-# Python
 __pycache__/
 *.pyc
-
-# Database
-*.sqlite
 .dmdb-pg/
-
-# Logs
+*.sqlite
 *.log
 /tmp/
-
-# IDE
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Codespace
-.claude/
-.config/
-.devcontainer/
-.pi/
-dmdb-codespace-scaffold.sh
-scripts/
-skills/
-
-# Temporary files
-*.tmp
-*.swp
-*.swo
-*~
