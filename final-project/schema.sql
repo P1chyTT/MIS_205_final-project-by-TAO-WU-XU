@@ -42,16 +42,17 @@ CREATE TABLE IF NOT EXISTS posts (
     -- 通用字段
     max_people      INT NOT NULL DEFAULT 2,
     current_people  INT NOT NULL DEFAULT 1,
-    status          VARCHAR(10) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed')),
+    status          VARCHAR(10) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed', 'completed', 'finished')),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- 2. 参与记录表
 CREATE TABLE IF NOT EXISTS participations (
-    id          SERIAL PRIMARY KEY,
-    post_id     INT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
-    user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    joined_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    id              SERIAL PRIMARY KEY,
+    post_id         INT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    user_id         UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    joined_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    is_confirmed    BOOLEAN NOT NULL DEFAULT false,  -- 参与者是否确认完成
     UNIQUE(post_id, user_id)  -- 同一用户不能重复参与同一帖子
 );
 
@@ -135,7 +136,7 @@ CREATE POLICY "用户可删除自己的收藏" ON favorites
 CREATE TABLE IF NOT EXISTS notifications (
     id          SERIAL PRIMARY KEY,
     user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    type        VARCHAR(20) NOT NULL CHECK (type IN ('join', 'leave', 'full', 'bill', 'system')),
+    type        VARCHAR(20) NOT NULL CHECK (type IN ('join', 'leave', 'full', 'bill', 'confirm', 'system')),
     title       VARCHAR(100) NOT NULL,
     content     TEXT,
     post_id     INT REFERENCES posts(id) ON DELETE CASCADE,
@@ -157,61 +158,14 @@ CREATE POLICY "系统可创建消息" ON notifications
 CREATE POLICY "用户可更新自己的消息" ON notifications
     FOR UPDATE USING (auth.uid() = user_id);
 
--- 10. 存储函数：参与人数增减（增强版，满员时发送通知）
+-- 10. 存储函数：参与人数增减
 CREATE OR REPLACE FUNCTION increment_participants(post_id_param INT)
 RETURNS VOID AS $$
-DECLARE
-    updated_post RECORD;
-    post_author UUID;
-    post_title VARCHAR(100);
-    per_person DECIMAL(10,2);
 BEGIN
     UPDATE posts
     SET current_people = current_people + 1,
         status = CASE WHEN current_people + 1 >= max_people THEN 'closed' ELSE 'open' END
-    WHERE id = post_id_param
-    RETURNING * INTO updated_post;
-
-    -- 如果帖子刚满员，发送组队成功通知给作者
-    IF updated_post.status = 'closed' AND updated_post.current_people >= updated_post.max_people THEN
-        -- 给作者发送满员通知
-        INSERT INTO notifications (user_id, type, title, content, post_id)
-        VALUES (
-            updated_post.user_id,
-            'full',
-            '组队成功！你的帖子已满员',
-            '你的帖子「' || updated_post.title || '」已达到人数上限（' || updated_post.max_people || '人），可以开始活动了！',
-            post_id_param
-        );
-
-        -- 如果是拼单类型，给所有参与者发送账单通知
-        IF updated_post.type = 'groupbuy' AND updated_post.total_amount IS NOT NULL THEN
-            per_person := ROUND(updated_post.total_amount / updated_post.max_people, 2);
-
-            -- 给所有参与者（包括作者）发送账单通知
-            INSERT INTO notifications (user_id, type, title, content, post_id)
-            SELECT
-                p.user_id,
-                'bill',
-                '拼单账单：请付款 ¥' || per_person,
-                '你参与的拼单「' || updated_post.title || '」总金额为 ¥' || updated_post.total_amount || '，人均 ¥' || per_person || '，请及时付款给发起人 ' || updated_post.author_name || '。',
-                post_id_param
-            FROM participations p
-            WHERE p.post_id = post_id_param;
-
-            -- 如果作者没有参与记录（可能不在 participations 表中），也给他发通知
-            IF NOT EXISTS (SELECT 1 FROM participations WHERE post_id = post_id_param AND user_id = updated_post.user_id) THEN
-                INSERT INTO notifications (user_id, type, title, content, post_id)
-                VALUES (
-                    updated_post.user_id,
-                    'bill',
-                    '拼单账单：请收款 ¥' || per_person,
-                    '你发起的拼单「' || updated_post.title || '」总金额为 ¥' || updated_post.total_amount || '，人均 ¥' || per_person || '，请向参与者收款。',
-                    post_id_param
-                );
-            END IF;
-        END IF;
-    END IF;
+    WHERE id = post_id_param;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -295,3 +249,122 @@ DROP TRIGGER IF EXISTS on_participation_delete ON participations;
 CREATE TRIGGER on_participation_delete
     AFTER DELETE ON participations
     FOR EACH ROW EXECUTE FUNCTION notify_on_leave();
+
+-- 13. 存储函数：发起人完成订单，发送账单
+CREATE OR REPLACE FUNCTION complete_order(post_id_param INT)
+RETURNS VOID AS $$
+DECLARE
+    post_record RECORD;
+    per_person DECIMAL(10,2);
+BEGIN
+    SELECT * INTO post_record
+    FROM posts WHERE id = post_id_param;
+
+    IF post_record IS NULL OR post_record.status != 'closed' THEN
+        RETURN;
+    END IF;
+
+    -- 更新帖子状态为 completed
+    UPDATE posts SET status = 'completed' WHERE id = post_id_param;
+
+    -- 如果是拼单类型，发送账单
+    IF post_record.type = 'groupbuy' AND post_record.total_amount IS NOT NULL THEN
+        per_person := ROUND(post_record.total_amount / post_record.max_people, 2);
+
+        -- 给所有参与者发送账单通知
+        INSERT INTO notifications (user_id, type, title, content, post_id)
+        SELECT
+            p.user_id,
+            'bill',
+            '拼单账单：请付款 ¥' || per_person,
+            '你参与的拼单「' || post_record.title || '」总金额为 ¥' || post_record.total_amount || '，人均 ¥' || per_person || '，请及时付款给发起人 ' || post_record.author_name || '。付款后请点击「确认完成」。',
+            post_id_param
+        FROM participations p
+        WHERE p.post_id = post_id_param;
+
+        -- 给发起人发送收款通知
+        INSERT INTO notifications (user_id, type, title, content, post_id)
+        VALUES (
+            post_record.user_id,
+            'bill',
+            '拼单账单：请收款 ¥' || per_person,
+            '你发起的拼单「' || post_record.title || '」总金额为 ¥' || post_record.total_amount || '，人均 ¥' || per_person || '，请向参与者收款。',
+            post_id_param
+        );
+    ELSE
+        -- 非拼单类型，只发送完成通知
+        INSERT INTO notifications (user_id, type, title, content, post_id)
+        SELECT
+            p.user_id,
+            'full',
+            '活动即将开始',
+            '你参与的「' || post_record.title || '」已被发起人确认，请准时参加。',
+            post_id_param
+        FROM participations p
+        WHERE p.post_id = post_id_param;
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 14. 存储函数：参与者确认完成
+CREATE OR REPLACE FUNCTION confirm_participation(post_id_param INT, user_id_param UUID)
+RETURNS VOID AS $$
+DECLARE
+    post_record RECORD;
+    all_confirmed BOOLEAN;
+    confirmer_name VARCHAR(50);
+BEGIN
+    -- 更新参与记录为已确认
+    UPDATE participations
+    SET is_confirmed = true
+    WHERE post_id = post_id_param AND user_id = user_id_param;
+
+    SELECT * INTO post_record
+    FROM posts WHERE id = post_id_param;
+
+    SELECT username INTO confirmer_name
+    FROM profiles WHERE id = user_id_param;
+
+    -- 给发起人发送确认通知
+    INSERT INTO notifications (user_id, type, title, content, post_id)
+    VALUES (
+        post_record.user_id,
+        'confirm',
+        '有人确认了订单',
+        COALESCE(confirmer_name, '有用户') || ' 已确认完成拼单「' || post_record.title || '」。',
+        post_id_param
+    );
+
+    -- 检查是否所有人都已确认
+    SELECT NOT EXISTS (
+        SELECT 1 FROM participations
+        WHERE post_id = post_id_param AND is_confirmed = false
+    ) INTO all_confirmed;
+
+    -- 如果所有人都确认了，更新帖子状态为 finished
+    IF all_confirmed THEN
+        UPDATE posts SET status = 'finished' WHERE id = post_id_param;
+
+        -- 给所有人发送订单完成通知
+        INSERT INTO notifications (user_id, type, title, content, post_id)
+        SELECT
+            p.user_id,
+            'system',
+            '订单已全部完成',
+            '拼单「' || post_record.title || '」所有参与者已确认完成，订单正式结束。',
+            post_id_param
+        FROM participations p
+        WHERE p.post_id = post_id_param;
+
+        -- 也给发起人发送
+        INSERT INTO notifications (user_id, type, title, content, post_id)
+        VALUES (
+            post_record.user_id,
+            'system',
+            '订单已全部完成',
+            '你发起的拼单「' || post_record.title || '」所有参与者已确认完成，订单正式结束。',
+            post_id_param
+        );
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

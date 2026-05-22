@@ -679,8 +679,8 @@
             }
 
             container.innerHTML = notificationsData.map(n => {
-                const icons = { join: '👋', leave: '👋', full: '✅', bill: '💰', system: '📢' };
-                const typeLabels = { join: '参与', leave: '退出', full: '满员', bill: '账单', system: '系统' };
+                const icons = { join: '👋', leave: '👋', full: '✅', bill: '💰', confirm: '✓', system: '📢' };
+                const typeLabels = { join: '参与', leave: '退出', full: '满员', bill: '账单', confirm: '确认', system: '系统' };
                 return `
                 <div class="notif-card ${n.is_read ? '' : 'unread'}" onclick="readNotif(${n.id})" data-id="${n.id}">
                     <div class="notif-icon">${icons[n.type] || '🔔'}</div>
