@@ -135,7 +135,7 @@ CREATE POLICY "用户可删除自己的收藏" ON favorites
 CREATE TABLE IF NOT EXISTS notifications (
     id          SERIAL PRIMARY KEY,
     user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    type        VARCHAR(20) NOT NULL CHECK (type IN ('join', 'leave', 'full', 'system')),
+    type        VARCHAR(20) NOT NULL CHECK (type IN ('join', 'leave', 'full', 'bill', 'system')),
     title       VARCHAR(100) NOT NULL,
     content     TEXT,
     post_id     INT REFERENCES posts(id) ON DELETE CASCADE,
@@ -157,14 +157,61 @@ CREATE POLICY "系统可创建消息" ON notifications
 CREATE POLICY "用户可更新自己的消息" ON notifications
     FOR UPDATE USING (auth.uid() = user_id);
 
--- 10. 存储函数：参与人数增减
+-- 10. 存储函数：参与人数增减（增强版，满员时发送通知）
 CREATE OR REPLACE FUNCTION increment_participants(post_id_param INT)
 RETURNS VOID AS $$
+DECLARE
+    updated_post RECORD;
+    post_author UUID;
+    post_title VARCHAR(100);
+    per_person DECIMAL(10,2);
 BEGIN
     UPDATE posts
     SET current_people = current_people + 1,
         status = CASE WHEN current_people + 1 >= max_people THEN 'closed' ELSE 'open' END
-    WHERE id = post_id_param;
+    WHERE id = post_id_param
+    RETURNING * INTO updated_post;
+
+    -- 如果帖子刚满员，发送组队成功通知给作者
+    IF updated_post.status = 'closed' AND updated_post.current_people >= updated_post.max_people THEN
+        -- 给作者发送满员通知
+        INSERT INTO notifications (user_id, type, title, content, post_id)
+        VALUES (
+            updated_post.user_id,
+            'full',
+            '组队成功！你的帖子已满员',
+            '你的帖子「' || updated_post.title || '」已达到人数上限（' || updated_post.max_people || '人），可以开始活动了！',
+            post_id_param
+        );
+
+        -- 如果是拼单类型，给所有参与者发送账单通知
+        IF updated_post.type = 'groupbuy' AND updated_post.total_amount IS NOT NULL THEN
+            per_person := ROUND(updated_post.total_amount / updated_post.max_people, 2);
+
+            -- 给所有参与者（包括作者）发送账单通知
+            INSERT INTO notifications (user_id, type, title, content, post_id)
+            SELECT
+                p.user_id,
+                'bill',
+                '拼单账单：请付款 ¥' || per_person,
+                '你参与的拼单「' || updated_post.title || '」总金额为 ¥' || updated_post.total_amount || '，人均 ¥' || per_person || '，请及时付款给发起人 ' || updated_post.author_name || '。',
+                post_id_param
+            FROM participations p
+            WHERE p.post_id = post_id_param;
+
+            -- 如果作者没有参与记录（可能不在 participations 表中），也给他发通知
+            IF NOT EXISTS (SELECT 1 FROM participations WHERE post_id = post_id_param AND user_id = updated_post.user_id) THEN
+                INSERT INTO notifications (user_id, type, title, content, post_id)
+                VALUES (
+                    updated_post.user_id,
+                    'bill',
+                    '拼单账单：请收款 ¥' || per_person,
+                    '你发起的拼单「' || updated_post.title || '」总金额为 ¥' || updated_post.total_amount || '，人均 ¥' || per_person || '，请向参与者收款。',
+                    post_id_param
+                );
+            END IF;
+        END IF;
+    END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
