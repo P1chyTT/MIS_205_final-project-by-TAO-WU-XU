@@ -74,6 +74,10 @@ CREATE POLICY "任何人都可查看用户信息" ON profiles
 
 -- profiles 由 trigger 自动创建，不需要 INSERT 策略（使用 SECURITY DEFINER 函数）
 
+-- 用户可更新自己的 profile
+CREATE POLICY "用户可更新自己的资料" ON profiles
+    FOR UPDATE USING (auth.uid() = id);
+
 -- 6. RLS 策略 — posts 表
 -- 任何人都可以查看帖子
 CREATE POLICY "任何人都可查看帖子" ON posts

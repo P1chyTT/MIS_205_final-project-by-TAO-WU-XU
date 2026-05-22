@@ -12,5 +12,6 @@
   },
   "packages": [
     "npm:pi-web-access"
-  ]
+  ],
+  "lastChangelogVersion": "0.70.6"
 }

@@ -25,6 +25,13 @@
         }
         .header h1 { font-size: 1.4rem; }
         .user-info { display: flex; align-items: center; gap: 1rem; }
+        .user-name-link {
+            color: white;
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        .user-name-link:hover { opacity: 0.9; }
         .logout-btn {
             background: rgba(255,255,255,0.2);
             color: white;
@@ -278,7 +285,7 @@
     <div class="header">
         <h1>🏫 校园搭子拼单</h1>
         <div class="user-info">
-            <span id="userDisplay">加载中...</span>
+            <span id="userDisplay" class="user-name-link" onclick="goProfile()">加载中...</span>
             <button class="logout-btn" onclick="doLogout()">退出</button>
         </div>
     </div>
@@ -375,6 +382,13 @@
 
                 await loadPosts();
                 await loadMyParticipations();
+
+                // 检查是否从用户中心跳转过来编辑帖子
+                const urlParams = new URLSearchParams(window.location.search);
+                const editPostId = urlParams.get('edit');
+                if (editPostId) {
+                    await loadPostForEdit(parseInt(editPostId));
+                }
             } catch (e) {
                 window.location.href = 'index.html';
             }
@@ -684,9 +698,8 @@
             await loadPosts();
         }
 
-        // ===== 编辑帖子 =====
-        async function editPost(postId) {
-            // 获取帖子详情
+        // ===== 从URL加载帖子编辑 =====
+        async function loadPostForEdit(postId) {
             const { data: post, error } = await sb.from('posts')
                 .select('*')
                 .eq('id', postId)
@@ -698,7 +711,6 @@
                 return;
             }
 
-            // 填充表单
             isEditing = true;
             editingPost = post;
             document.getElementById('formTitle').textContent = '编辑帖子';
@@ -711,13 +723,19 @@
             setPostType(post.type);
             if (post.type === 'buddy') {
                 document.getElementById('buddyLocation').value = post.location || '';
-                document.getElementById('buddyTime').value = post.meet_time || '';
+                document.getElementById('buddyTime').value = post.meet_time ? post.meet_time.slice(0, 16) : '';
             } else {
                 document.getElementById('gbAmount').value = post.total_amount || '';
             }
 
-            // 切换到表单页面
             switchSection('create');
+            // 清除URL参数
+            window.history.replaceState({}, '', window.location.pathname);
+        }
+
+        // ===== 编辑帖子 =====
+        async function editPost(postId) {
+            await loadPostForEdit(postId);
         }
 
         // ===== 删除帖子 =====
@@ -735,6 +753,11 @@
             }
 
             await loadPosts();
+        }
+
+        // ===== 跳转用户中心 =====
+        function goProfile() {
+            window.location.href = 'profile.html';
         }
         // ===== 登出 =====
         async function doLogout() {

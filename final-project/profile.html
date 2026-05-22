@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户中心 - 校园搭子拼单系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        /* ===== Header ===== */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .header h1 { font-size: 1.4rem; cursor: pointer; }
+        .header h1:hover { opacity: 0.9; }
+        .user-info { display: flex; align-items: center; gap: 1rem; }
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 0.4rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .logout-btn:hover { background: rgba(255,255,255,0.35); }
+
+        /* ===== Container ===== */
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        /* ===== Sidebar ===== */
+        .sidebar {
+            width: 240px;
+            flex-shrink: 0;
+        }
+        .profile-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 1rem;
+        }
+        .profile-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 0.3rem;
+        }
+        .profile-email {
+            font-size: 0.85rem;
+            color: #888;
+            word-break: break-all;
+        }
+        .profile-meta {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-top: 0.5rem;
+        }
+
+        .menu-list {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .menu-item {
+            padding: 1rem 1.2rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            transition: all 0.2s;
+        }
+        .menu-item:hover { background: #f5f7ff; color: #667eea; }
+        .menu-item.active {
+            background: #f0f3ff;
+            color: #667eea;
+            border-left: 3px solid #667eea;
+        }
+
+        /* ===== Main Content ===== */
+        .main-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+
+        .section-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 1rem;
+        }
+        .section-card h2 {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        /* ===== Stats Grid ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.2rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-box .number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+        .stat-box .label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        /* ===== Post Cards (reuse from dashboard) ===== */
+        .post-card {
+            background: white;
+            padding: 1.2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 0.75rem;
+            transition: box-shadow 0.2s;
+        }
+        .post-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+
+        .post-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.4rem;
+        }
+        .post-card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #333;
+            cursor: pointer;
+        }
+        .post-card-title:hover { color: #667eea; }
+        .post-tag {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        .tag-buddy { background: #e8f5e9; color: #2e7d32; }
+        .tag-groupbuy { background: #fff3e0; color: #e65100; }
+        .tag-closed { background: #f5f5f5; color: #999; }
+
+        .post-card-meta {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 0.4rem;
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .post-card-desc {
+            color: #555;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+        .post-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 0.5rem;
+            border-top: 1px solid #f0f0f0;
+        }
+        .people-badge {
+            font-size: 0.8rem;
+            color: #667eea;
+            font-weight: 600;
+        }
+        .people-badge.full { color: #e53935; }
+
+        .post-actions {
+            display: flex;
+            gap: 0.4rem;
+        }
+        .action-btn {
+            padding: 0.3rem 0.6rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            background: white;
+            color: #666;
+        }
+        .action-btn:hover { background: #f5f5f5; }
+        .action-btn.primary { border-color: #667eea; color: #667eea; }
+        .action-btn.primary:hover { background: #f0f3ff; }
+        .action-btn.danger { border-color: #e53935; color: #e53935; }
+        .action-btn.danger:hover { background: #ffebee; }
+
+        /* ===== Profile Edit Form ===== */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            color: #555;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+        .form-group input:disabled {
+            background: #f5f5f5;
+            color: #888;
+            cursor: not-allowed;
+        }
+        .submit-btn {
+            padding: 0.7rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .submit-btn:hover { opacity: 0.92; }
+
+        .toast {
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            text-align: center;
+            display: none;
+            font-size: 0.9rem;
+        }
+        .toast.error { background: #fee; color: #c33; display: block; }
+        .toast.success { background: #efe; color: #3c3; display: block; }
+
+        /* ===== Empty State ===== */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #999;
+        }
+        .empty-state .icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            .sidebar { width: 100%; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 onclick="goDashboard()">🏫 校园搭子拼单</h1>
+        <div class="user-info">
+            <span id="userDisplay">加载中...</span>
+            <button class="logout-btn" onclick="doLogout()">退出</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- ===== Sidebar ===== -->
+        <div class="sidebar">
+            <div class="profile-card">
+                <div class="avatar" id="userAvatar">👤</div>
+                <div class="profile-name" id="profileName">-</div>
+                <div class="profile-email" id="profileEmail">-</div>
+                <div class="profile-meta" id="profileMeta">-</div>
+            </div>
+            <div class="menu-list">
+                <button class="menu-item active" onclick="switchTab('overview')" data-tab="overview">
+                    📊 总览
+                </button>
+                <button class="menu-item" onclick="switchTab('myposts')" data-tab="myposts">
+                    📝 我的发帖
+                </button>
+                <button class="menu-item" onclick="switchTab('myparticipations')" data-tab="myparticipations">
+                    🤝 我的参与
+                </button>
+                <button class="menu-item" onclick="switchTab('profile')" data-tab="profile">
+                    👤 个人资料
+                </button>
+            </div>
+        </div>
+
+        <!-- ===== Main Content ===== -->
+        <div class="main-content">
+            <!-- 总览 -->
+            <div id="overviewSection" class="content-section active">
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="number" id="statPosts">0</div>
+                        <div class="label">我的发帖</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number" id="statParticipations">0</div>
+                        <div class="label">我的参与</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number" id="statGroupBuy">0</div>
+                        <div class="label">拼单次数</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="number" id="statBuddy">0</div>
+                        <div class="label">找搭子次数</div>
+                    </div>
+                </div>
+                <div class="section-card">
+                    <h2>📝 最近发帖</h2>
+                    <div id="recentPosts"></div>
+                </div>
+            </div>
+
+            <!-- 我的发帖 -->
+            <div id="mypostsSection" class="content-section">
+                <div class="section-card">
+                    <h2>📝 我的发帖</h2>
+                    <div id="myPostsList"></div>
+                </div>
+            </div>
+
+            <!-- 我的参与 -->
+            <div id="myparticipationsSection" class="content-section">
+                <div class="section-card">
+                    <h2>🤝 我的参与</h2>
+                    <div id="myParticipationsList"></div>
+                </div>
+            </div>
+
+            <!-- 个人资料 -->
+            <div id="profileSection" class="content-section">
+                <div class="section-card">
+                    <h2>👤 个人资料</h2>
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" id="editUsername" placeholder="输入用户名">
+                    </div>
+                    <div class="form-group">
+                        <label>邮箱</label>
+                        <input type="email" id="editEmail" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>注册时间</label>
+                        <input type="text" id="editCreatedAt" disabled>
+                    </div>
+                    <button class="submit-btn" onclick="saveProfile()">保存修改</button>
+                    <div id="profileToast" class="toast"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        let sb = null;
+        let currentUser = null;
+        let myPosts = [];
+        let myParticipationsData = [];
+
+        // ===== 初始化 =====
+        window.onload = async function() {
+            const url = localStorage.getItem('sbUrl');
+            const key = localStorage.getItem('sbKey');
+            if (!url || !key) { window.location.href = 'index.html'; return; }
+
+            try {
+                sb = window.supabase.createClient(url, key);
+                const { data: { user } } = await sb.auth.getUser();
+                if (!user) { window.location.href = 'index.html'; return; }
+                currentUser = user;
+
+                const username = user.user_metadata?.username || user.email;
+                document.getElementById('userDisplay').textContent = username;
+                document.getElementById('profileName').textContent = username;
+                document.getElementById('profileEmail').textContent = user.email;
+                document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+
+                // 加载 profile 信息
+                await loadProfile();
+                // 加载统计数据
+                await loadStats();
+                // 加载帖子列表
+                await loadMyPosts();
+                await loadMyParticipations();
+            } catch (e) {
+                window.location.href = 'index.html';
+            }
+        };
+
+        // ===== 加载个人资料 =====
+        async function loadProfile() {
+            const { data, error } = await sb
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+
+            if (data) {
+                document.getElementById('editUsername').value = data.username || '';
+                document.getElementById('editEmail').value = currentUser.email;
+                document.getElementById('editCreatedAt').value = new Date(data.created_at).toLocaleString('zh-CN');
+                document.getElementById('profileMeta').textContent = '注册于 ' + new Date(data.created_at).toLocaleDateString('zh-CN');
+            }
+        }
+
+        // ===== 保存个人资料 =====
+        async function saveProfile() {
+            const username = document.getElementById('editUsername').value.trim();
+            if (!username) {
+                showToast('用户名不能为空', true);
+                return;
+            }
+
+            const { error } = await sb
+                .from('profiles')
+                .update({ username })
+                .eq('id', currentUser.id);
+
+            if (error) {
+                showToast('保存失败: ' + error.message, true);
+                return;
+            }
+
+            // 同时更新 user_metadata
+            await sb.auth.updateUser({ data: { username } });
+
+            document.getElementById('profileName').textContent = username;
+            document.getElementById('userDisplay').textContent = username;
+            showToast('保存成功！', false);
+        }
+
+        // ===== 加载统计数据 =====
+        async function loadStats() {
+            // 我的发帖数
+            const { data: posts } = await sb
+                .from('posts')
+                .select('*')
+                .eq('user_id', currentUser.id);
+            myPosts = posts || [];
+            document.getElementById('statPosts').textContent = myPosts.length;
+
+            // 我的参与数
+            const { data: parts } = await sb
+                .from('participations')
+                .select('*, posts(*)')
+                .eq('user_id', currentUser.id);
+            myParticipationsData = parts || [];
+            document.getElementById('statParticipations').textContent = myParticipationsData.length;
+
+            // 拼单次数
+            const groupBuyCount = myParticipationsData.filter(p => p.posts?.type === 'groupbuy').length;
+            document.getElementById('statGroupBuy').textContent = groupBuyCount;
+
+            // 找搭子次数
+            const buddyCount = myParticipationsData.filter(p => p.posts?.type === 'buddy').length;
+            document.getElementById('statBuddy').textContent = buddyCount;
+
+            // 显示最近发帖
+            renderRecentPosts();
+        }
+
+        // ===== 加载我的发帖 =====
+        async function loadMyPosts() {
+            const container = document.getElementById('myPostsList');
+            if (myPosts.length === 0) {
+                container.innerHTML = `<div class="empty-state"><div class="icon">📝</div><p>还没有发布过帖子</p></div>`;
+                return;
+            }
+            container.innerHTML = myPosts.map(post => renderPostCard(post, true)).join('');
+        }
+
+        // ===== 加载我的参与 =====
+        async function loadMyParticipations() {
+            const container = document.getElementById('myParticipationsList');
+            if (myParticipationsData.length === 0) {
+                container.innerHTML = `<div class="empty-state"><div class="icon">🤝</div><p>还没有参与过任何帖子</p></div>`;
+                return;
+            }
+            container.innerHTML = myParticipationsData.map(p => renderPostCard(p.posts, false, p.joined_at)).join('');
+        }
+
+        // ===== 渲染帖子卡片 =====
+        function renderPostCard(post, isMine, joinedAt) {
+            if (!post) return '';
+            const isClosed = post.status === 'closed';
+            const isFull = post.current_people >= post.max_people;
+
+            let tagClass = 'post-tag ';
+            let tagText = '';
+            if (isClosed) {
+                tagClass += 'tag-closed';
+                tagText = '已结束';
+            } else if (post.type === 'buddy') {
+                tagClass += 'tag-buddy';
+                tagText = '找搭子';
+            } else {
+                tagClass += 'tag-groupbuy';
+                tagText = '拼单';
+            }
+
+            let extraInfo = '';
+            if (post.type === 'groupbuy' && post.total_amount) {
+                const perPerson = (post.total_amount / post.max_people).toFixed(2);
+                extraInfo += `<span>💰 人均 ¥${perPerson}</span>`;
+            }
+            if (post.type === 'buddy') {
+                if (post.location) extraInfo += `<span>📍 ${escHtml(post.location)}</span>`;
+                if (post.meet_time) {
+                    const dt = new Date(post.meet_time);
+                    extraInfo += `<span>🕐 ${dt.toLocaleString('zh-CN')}</span>`;
+                }
+            }
+            if (joinedAt) {
+                extraInfo += `<span>✅ 参与于 ${new Date(joinedAt).toLocaleDateString('zh-CN')}</span>`;
+            }
+
+            let actions = '';
+            if (isMine) {
+                actions = `
+                    <div class="post-actions">
+                        <button class="action-btn primary" onclick="editPost(${post.id})">编辑</button>
+                        <button class="action-btn danger" onclick="deletePost(${post.id})">删除</button>
+                    </div>`;
+            }
+
+            return `
+            <div class="post-card">
+                <div class="post-card-header">
+                    <span class="post-card-title" onclick="goPost(${post.id})">${escHtml(post.title)}</span>
+                    <span class="${tagClass}">${tagText}</span>
+                </div>
+                <div class="post-card-meta">
+                    <span>👤 ${escHtml(post.author_name)}</span>
+                    ${extraInfo}
+                    <span>📅 ${new Date(post.created_at).toLocaleString('zh-CN')}</span>
+                </div>
+                ${post.description ? `<div class="post-card-desc">${escHtml(post.description)}</div>` : ''}
+                <div class="post-card-footer">
+                    <span class="people-badge ${isFull ? 'full' : ''}">👥 ${post.current_people} / ${post.max_people}</span>
+                    ${actions}
+                </div>
+            </div>`;
+        }
+
+        // ===== 渲染最近发帖 =====
+        function renderRecentPosts() {
+            const container = document.getElementById('recentPosts');
+            const recent = myPosts.slice(0, 3);
+            if (recent.length === 0) {
+                container.innerHTML = `<div class="empty-state"><div class="icon">📝</div><p>还没有发布过帖子</p></div>`;
+                return;
+            }
+            container.innerHTML = recent.map(post => renderPostCard(post, true)).join('');
+        }
+
+        // ===== 切换标签页 =====
+        function switchTab(tab) {
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.tab === tab);
+            });
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(tab + 'Section').classList.add('active');
+        }
+
+        // ===== 跳转帖子详情 =====
+        function goPost(postId) {
+            // 跳转到 dashboard 并定位到该帖子
+            localStorage.setItem('scrollToPost', postId);
+            window.location.href = 'dashboard.html';
+        }
+
+        // ===== 编辑帖子 =====
+        async function editPost(postId) {
+            localStorage.setItem('editPostId', postId);
+            window.location.href = 'dashboard.html?edit=' + postId;
+        }
+
+        // ===== 删除帖子 =====
+        async function deletePost(postId) {
+            if (!confirm('确定要删除这个帖子吗？此操作无法撤销。')) return;
+
+            const { error } = await sb.from('posts')
+                .delete()
+                .eq('id', postId)
+                .eq('user_id', currentUser.id);
+
+            if (error) {
+                alert('删除失败: ' + error.message);
+                return;
+            }
+
+            await loadStats();
+            await loadMyPosts();
+            renderRecentPosts();
+        }
+
+        // ===== 跳转 Dashboard =====
+        function goDashboard() {
+            window.location.href = 'dashboard.html';
+        }
+
+        // ===== 登出 =====
+        async function doLogout() {
+            if (sb) await sb.auth.signOut();
+            window.location.href = 'index.html';
+        }
+
+        // ===== Toast =====
+        function showToast(text, isError) {
+            const el = document.getElementById('profileToast');
+            el.textContent = text;
+            el.className = isError ? 'toast error' : 'toast success';
+            setTimeout(() => { el.className = 'toast'; }, 3000);
+        }
+
+        // ===== HTML 转义 =====
+        function escHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
