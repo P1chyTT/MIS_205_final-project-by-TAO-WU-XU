@@ -108,7 +108,56 @@ CREATE POLICY "登录用户可参与帖子" ON participations
 CREATE POLICY "参与者可退出" ON participations
     FOR DELETE USING (auth.uid() = user_id);
 
--- 8. 存储函数：参与人数增减
+-- 8. 收藏表
+CREATE TABLE IF NOT EXISTS favorites (
+    id          SERIAL PRIMARY KEY,
+    user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    post_id     INT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(user_id, post_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_favorites_user_id ON favorites(user_id);
+CREATE INDEX IF NOT EXISTS idx_favorites_post_id ON favorites(post_id);
+
+ALTER TABLE favorites ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "任何人都可查看收藏" ON favorites
+    FOR SELECT USING (true);
+
+CREATE POLICY "登录用户可添加收藏" ON favorites
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "用户可删除自己的收藏" ON favorites
+    FOR DELETE USING (auth.uid() = user_id);
+
+-- 9. 消息通知表
+CREATE TABLE IF NOT EXISTS notifications (
+    id          SERIAL PRIMARY KEY,
+    user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    type        VARCHAR(20) NOT NULL CHECK (type IN ('join', 'leave', 'full', 'system')),
+    title       VARCHAR(100) NOT NULL,
+    content     TEXT,
+    post_id     INT REFERENCES posts(id) ON DELETE CASCADE,
+    is_read     BOOLEAN NOT NULL DEFAULT false,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id, is_read);
+
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "用户可查看自己的消息" ON notifications
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "系统可创建消息" ON notifications
+    FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "用户可更新自己的消息" ON notifications
+    FOR UPDATE USING (auth.uid() = user_id);
+
+-- 10. 存储函数：参与人数增减
 CREATE OR REPLACE FUNCTION increment_participants(post_id_param INT)
 RETURNS VOID AS $$
 BEGIN
@@ -128,3 +177,74 @@ BEGIN
     WHERE id = post_id_param;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 11. 触发器函数：创建通知（有人参与帖子时通知帖子作者）
+CREATE OR REPLACE FUNCTION notify_on_join()
+RETURNS TRIGGER AS $$
+DECLARE
+    post_author UUID;
+    post_title VARCHAR(100);
+    joiner_name VARCHAR(50);
+BEGIN
+    -- 获取帖子作者和标题
+    SELECT user_id, title INTO post_author, post_title
+    FROM posts WHERE id = NEW.post_id;
+
+    -- 获取参与者用户名
+    SELECT username INTO joiner_name
+    FROM profiles WHERE id = NEW.user_id;
+
+    -- 给帖子作者发送通知（排除自己参与自己的帖子）
+    IF post_author IS NOT NULL AND post_author != NEW.user_id THEN
+        INSERT INTO notifications (user_id, type, title, content, post_id)
+        VALUES (
+            post_author,
+            'join',
+            '有人参与了你的帖子',
+            COALESCE(joiner_name, '有用户') || ' 参与了你的帖子「' || post_title || '」',
+            NEW.post_id
+        );
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_participation_insert ON participations;
+CREATE TRIGGER on_participation_insert
+    AFTER INSERT ON participations
+    FOR EACH ROW EXECUTE FUNCTION notify_on_join();
+
+-- 12. 触发器函数：创建通知（有人退出帖子时通知帖子作者）
+CREATE OR REPLACE FUNCTION notify_on_leave()
+RETURNS TRIGGER AS $$
+DECLARE
+    post_author UUID;
+    post_title VARCHAR(100);
+    leaver_name VARCHAR(50);
+BEGIN
+    SELECT user_id, title INTO post_author, post_title
+    FROM posts WHERE id = OLD.post_id;
+
+    SELECT username INTO leaver_name
+    FROM profiles WHERE id = OLD.user_id;
+
+    IF post_author IS NOT NULL AND post_author != OLD.user_id THEN
+        INSERT INTO notifications (user_id, type, title, content, post_id)
+        VALUES (
+            post_author,
+            'leave',
+            '有人退出了你的帖子',
+            COALESCE(leaver_name, '有用户') || ' 退出了你的帖子「' || post_title || '」',
+            OLD.post_id
+        );
+    END IF;
+
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_participation_delete ON participations;
+CREATE TRIGGER on_participation_delete
+    AFTER DELETE ON participations
+    FOR EACH ROW EXECUTE FUNCTION notify_on_leave();

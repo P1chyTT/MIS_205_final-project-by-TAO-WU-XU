@@ -108,6 +108,7 @@
             align-items: center;
             gap: 0.6rem;
             transition: all 0.2s;
+            position: relative;
         }
         .menu-item:hover { background: #f5f7ff; color: #667eea; }
         .menu-item.active {
@@ -115,6 +116,18 @@
             color: #667eea;
             border-left: 3px solid #667eea;
         }
+        .menu-badge {
+            position: absolute;
+            right: 1rem;
+            background: #e53935;
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 10px;
+            font-weight: 700;
+            display: none;
+        }
+        .menu-badge.show { display: block; }
 
         /* ===== Main Content ===== */
         .main-content {
@@ -163,7 +176,7 @@
             opacity: 0.9;
         }
 
-        /* ===== Post Cards (reuse from dashboard) ===== */
+        /* ===== Post Cards ===== */
         .post-card {
             background: white;
             padding: 1.2rem;
@@ -243,6 +256,53 @@
         .action-btn.primary:hover { background: #f0f3ff; }
         .action-btn.danger { border-color: #e53935; color: #e53935; }
         .action-btn.danger:hover { background: #ffebee; }
+
+        /* ===== Notification Cards ===== */
+        .notif-card {
+            background: white;
+            padding: 1rem 1.2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 0.75rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .notif-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+        .notif-card.unread {
+            background: #f8f9ff;
+            border-left-color: #667eea;
+        }
+        .notif-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        .notif-content { flex: 1; min-width: 0; }
+        .notif-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.2rem;
+        }
+        .notif-text {
+            font-size: 0.85rem;
+            color: #666;
+            line-height: 1.4;
+        }
+        .notif-time {
+            font-size: 0.75rem;
+            color: #aaa;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .notif-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
 
         /* ===== Profile Edit Form ===== */
         .form-group {
@@ -339,6 +399,13 @@
                 <button class="menu-item" onclick="switchTab('myparticipations')" data-tab="myparticipations">
                     🤝 我的参与
                 </button>
+                <button class="menu-item" onclick="switchTab('favorites')" data-tab="favorites">
+                    ⭐ 我的收藏
+                </button>
+                <button class="menu-item" onclick="switchTab('notifications')" data-tab="notifications">
+                    🔔 消息中心
+                    <span class="menu-badge" id="menuNotifBadge">0</span>
+                </button>
                 <button class="menu-item" onclick="switchTab('profile')" data-tab="profile">
                     👤 个人资料
                 </button>
@@ -359,12 +426,12 @@
                         <div class="label">我的参与</div>
                     </div>
                     <div class="stat-box">
-                        <div class="number" id="statGroupBuy">0</div>
-                        <div class="label">拼单次数</div>
+                        <div class="number" id="statFavorites">0</div>
+                        <div class="label">我的收藏</div>
                     </div>
                     <div class="stat-box">
-                        <div class="number" id="statBuddy">0</div>
-                        <div class="label">找搭子次数</div>
+                        <div class="number" id="statUnread">0</div>
+                        <div class="label">未读消息</div>
                     </div>
                 </div>
                 <div class="section-card">
@@ -386,6 +453,22 @@
                 <div class="section-card">
                     <h2>🤝 我的参与</h2>
                     <div id="myParticipationsList"></div>
+                </div>
+            </div>
+
+            <!-- 我的收藏 -->
+            <div id="favoritesSection" class="content-section">
+                <div class="section-card">
+                    <h2>⭐ 我的收藏</h2>
+                    <div id="myFavoritesList"></div>
+                </div>
+            </div>
+
+            <!-- 消息中心 -->
+            <div id="notificationsSection" class="content-section">
+                <div class="section-card">
+                    <h2>🔔 消息中心</h2>
+                    <div id="notificationsList"></div>
                 </div>
             </div>
 
@@ -419,6 +502,8 @@
         let currentUser = null;
         let myPosts = [];
         let myParticipationsData = [];
+        let myFavoritesData = [];
+        let notificationsData = [];
 
         // ===== 初始化 =====
         window.onload = async function() {
@@ -438,13 +523,20 @@
                 document.getElementById('profileEmail').textContent = user.email;
                 document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
 
-                // 加载 profile 信息
                 await loadProfile();
-                // 加载统计数据
                 await loadStats();
-                // 加载帖子列表
                 await loadMyPosts();
                 await loadMyParticipations();
+                await loadMyFavorites();
+                await loadNotifications();
+
+                // 检查URL参数切换标签页
+                const urlParams = new URLSearchParams(window.location.search);
+                const tab = urlParams.get('tab');
+                if (tab) {
+                    switchTab(tab);
+                    window.history.replaceState({}, '', window.location.pathname);
+                }
             } catch (e) {
                 window.location.href = 'index.html';
             }
@@ -484,7 +576,6 @@
                 return;
             }
 
-            // 同时更新 user_metadata
             await sb.auth.updateUser({ data: { username } });
 
             document.getElementById('profileName').textContent = username;
@@ -494,7 +585,6 @@
 
         // ===== 加载统计数据 =====
         async function loadStats() {
-            // 我的发帖数
             const { data: posts } = await sb
                 .from('posts')
                 .select('*')
@@ -502,7 +592,6 @@
             myPosts = posts || [];
             document.getElementById('statPosts').textContent = myPosts.length;
 
-            // 我的参与数
             const { data: parts } = await sb
                 .from('participations')
                 .select('*, posts(*)')
@@ -510,15 +599,20 @@
             myParticipationsData = parts || [];
             document.getElementById('statParticipations').textContent = myParticipationsData.length;
 
-            // 拼单次数
-            const groupBuyCount = myParticipationsData.filter(p => p.posts?.type === 'groupbuy').length;
-            document.getElementById('statGroupBuy').textContent = groupBuyCount;
+            const { data: favs } = await sb
+                .from('favorites')
+                .select('*')
+                .eq('user_id', currentUser.id);
+            myFavoritesData = favs || [];
+            document.getElementById('statFavorites').textContent = myFavoritesData.length;
 
-            // 找搭子次数
-            const buddyCount = myParticipationsData.filter(p => p.posts?.type === 'buddy').length;
-            document.getElementById('statBuddy').textContent = buddyCount;
+            const { count: unreadCount } = await sb
+                .from('notifications')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', currentUser.id)
+                .eq('is_read', false);
+            document.getElementById('statUnread').textContent = unreadCount || 0;
 
-            // 显示最近发帖
             renderRecentPosts();
         }
 
@@ -542,8 +636,94 @@
             container.innerHTML = myParticipationsData.map(p => renderPostCard(p.posts, false, p.joined_at)).join('');
         }
 
+        // ===== 加载我的收藏 =====
+        async function loadMyFavorites() {
+            const { data } = await sb
+                .from('favorites')
+                .select('*, posts(*)')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false });
+
+            const container = document.getElementById('myFavoritesList');
+            if (!data || data.length === 0) {
+                container.innerHTML = `<div class="empty-state"><div class="icon">⭐</div><p>还没有收藏任何帖子</p></div>`;
+                return;
+            }
+            container.innerHTML = data.map(f => renderPostCard(f.posts, false, null, true)).join('');
+        }
+
+        // ===== 加载消息通知 =====
+        async function loadNotifications() {
+            const { data } = await sb
+                .from('notifications')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false });
+
+            notificationsData = data || [];
+
+            // 更新侧边栏未读数
+            const unreadCount = notificationsData.filter(n => !n.is_read).length;
+            const badge = document.getElementById('menuNotifBadge');
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                badge.classList.add('show');
+            } else {
+                badge.classList.remove('show');
+            }
+
+            const container = document.getElementById('notificationsList');
+            if (notificationsData.length === 0) {
+                container.innerHTML = `<div class="empty-state"><div class="icon">🔔</div><p>暂无消息</p></div>`;
+                return;
+            }
+
+            container.innerHTML = notificationsData.map(n => {
+                const icons = { join: '👋', leave: '👋', full: '✅', system: '📢' };
+                return `
+                <div class="notif-card ${n.is_read ? '' : 'unread'}" onclick="readNotif(${n.id})" data-id="${n.id}">
+                    <div class="notif-icon">${icons[n.type] || '🔔'}</div>
+                    <div class="notif-content">
+                        <div class="notif-title">${escHtml(n.title)}</div>
+                        <div class="notif-text">${escHtml(n.content || '')}</div>
+                    </div>
+                    <div class="notif-time">${new Date(n.created_at).toLocaleString('zh-CN')}</div>
+                </div>`;
+            }).join('');
+        }
+
+        // ===== 标记消息已读 =====
+        async function readNotif(notifId) {
+            const notif = notificationsData.find(n => n.id === notifId);
+            if (!notif || notif.is_read) {
+                if (notif?.post_id) goPost(notif.post_id);
+                return;
+            }
+
+            await sb.from('notifications')
+                .update({ is_read: true })
+                .eq('id', notifId)
+                .eq('user_id', currentUser.id);
+
+            notif.is_read = true;
+            const card = document.querySelector(`.notif-card[data-id="${notifId}"]`);
+            if (card) card.classList.remove('unread');
+
+            // 更新未读数
+            const unreadCount = notificationsData.filter(n => !n.is_read).length;
+            const badge = document.getElementById('menuNotifBadge');
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            } else {
+                badge.classList.remove('show');
+            }
+            document.getElementById('statUnread').textContent = unreadCount;
+
+            if (notif.post_id) goPost(notif.post_id);
+        }
+
         // ===== 渲染帖子卡片 =====
-        function renderPostCard(post, isMine, joinedAt) {
+        function renderPostCard(post, isMine, joinedAt, isFav) {
             if (!post) return '';
             const isClosed = post.status === 'closed';
             const isFull = post.current_people >= post.max_people;
@@ -581,8 +761,13 @@
             if (isMine) {
                 actions = `
                     <div class="post-actions">
-                        <button class="action-btn primary" onclick="editPost(${post.id})">编辑</button>
-                        <button class="action-btn danger" onclick="deletePost(${post.id})">删除</button>
+                        <button class="action-btn primary" onclick="event.stopPropagation();editPost(${post.id})">编辑</button>
+                        <button class="action-btn danger" onclick="event.stopPropagation();deletePost(${post.id})">删除</button>
+                    </div>`;
+            } else if (isFav) {
+                actions = `
+                    <div class="post-actions">
+                        <button class="action-btn danger" onclick="event.stopPropagation();unfavPost(${post.id})">取消收藏</button>
                     </div>`;
             }
 
@@ -625,18 +810,20 @@
                 section.classList.remove('active');
             });
             document.getElementById(tab + 'Section').classList.add('active');
+
+            // 切换时刷新数据
+            if (tab === 'favorites') loadMyFavorites();
+            if (tab === 'notifications') loadNotifications();
         }
 
         // ===== 跳转帖子详情 =====
         function goPost(postId) {
-            // 跳转到 dashboard 并定位到该帖子
             localStorage.setItem('scrollToPost', postId);
             window.location.href = 'dashboard.html';
         }
 
         // ===== 编辑帖子 =====
         async function editPost(postId) {
-            localStorage.setItem('editPostId', postId);
             window.location.href = 'dashboard.html?edit=' + postId;
         }
 
@@ -657,6 +844,19 @@
             await loadStats();
             await loadMyPosts();
             renderRecentPosts();
+        }
+
+        // ===== 取消收藏 =====
+        async function unfavPost(postId) {
+            const { error } = await sb.from('favorites')
+                .delete()
+                .eq('post_id', postId)
+                .eq('user_id', currentUser.id);
+
+            if (!error) {
+                await loadMyFavorites();
+                await loadStats();
+            }
         }
 
         // ===== 跳转 Dashboard =====

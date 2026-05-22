@@ -25,6 +25,25 @@
         }
         .header h1 { font-size: 1.4rem; }
         .user-info { display: flex; align-items: center; gap: 1rem; }
+        .notification-icon {
+            position: relative;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0.3rem;
+        }
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #e53935;
+            color: white;
+            font-size: 0.65rem;
+            padding: 0.1rem 0.35rem;
+            border-radius: 10px;
+            font-weight: 700;
+            display: none;
+        }
+        .notification-badge.show { display: block; }
         .user-name-link {
             color: white;
             cursor: pointer;
@@ -265,6 +284,21 @@
             color: #e53935;
         }
         .delete-btn:hover { background: #ffebee; }
+        .fav-btn {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid #ff9800;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: white;
+            color: #ff9800;
+        }
+        .fav-btn:hover { background: #fff8e1; }
+        .fav-btn.faved {
+            background: #ff9800;
+            color: white;
+        }
         .empty-state {
             text-align: center;
             padding: 3rem;
@@ -285,6 +319,10 @@
     <div class="header">
         <h1>🏫 校园搭子拼单</h1>
         <div class="user-info">
+            <div class="notification-icon" onclick="goProfile('notifications')">
+                🔔
+                <span class="notification-badge" id="notifBadge">0</span>
+            </div>
             <span id="userDisplay" class="user-name-link" onclick="goProfile()">加载中...</span>
             <button class="logout-btn" onclick="doLogout()">退出</button>
         </div>
@@ -382,6 +420,8 @@
 
                 await loadPosts();
                 await loadMyParticipations();
+                await loadMyFavorites();
+                await loadUnreadCount();
 
                 // 检查是否从用户中心跳转过来编辑帖子
                 const urlParams = new URLSearchParams(window.location.search);
@@ -623,18 +663,24 @@
 
                 // 参与按钮或编辑/删除按钮
                 let buttonHTML = '';
+                const isFav = myFavorites.has(post.id);
                 if (isMine) {
                     buttonHTML = `
                         <div class="post-actions">
                             <button class="edit-btn" onclick="editPost(${post.id})">编辑</button>
                             <button class="delete-btn" onclick="deletePost(${post.id})">删除</button>
                         </div>`;
-                } else if (isClosed || isFull) {
-                    buttonHTML = `<button class="join-btn" disabled>已满员</button>`;
-                } else if (isJoined) {
-                    buttonHTML = `<button class="join-btn joined" onclick="leavePost(${post.id})">已参与 ✓</button>`;
                 } else {
-                    buttonHTML = `<button class="join-btn" onclick="joinPost(${post.id})">参与</button>`;
+                    let joinBtn = '';
+                    if (isClosed || isFull) {
+                        joinBtn = `<button class="join-btn" disabled>已满员</button>`;
+                    } else if (isJoined) {
+                        joinBtn = `<button class="join-btn joined" onclick="leavePost(${post.id})">已参与 ✓</button>`;
+                    } else {
+                        joinBtn = `<button class="join-btn" onclick="joinPost(${post.id})">参与</button>`;
+                    }
+                    const favBtn = `<button class="fav-btn ${isFav ? 'faved' : ''}" onclick="toggleFav(${post.id})">${isFav ? '★' : '☆'}</button>`;
+                    buttonHTML = `<div class="post-actions">${favBtn}${joinBtn}</div>`;
                 }
 
                 html += `
@@ -755,10 +801,57 @@
             await loadPosts();
         }
 
-        // ===== 跳转用户中心 =====
-        function goProfile() {
-            window.location.href = 'profile.html';
+        // ===== 收藏功能 =====
+        let myFavorites = new Set();
+
+        async function loadMyFavorites() {
+            if (!currentUser) return;
+            const { data, error } = await sb.from('favorites')
+                .select('post_id')
+                .eq('user_id', currentUser.id);
+            if (!error && data) {
+                myFavorites = new Set(data.map(r => r.post_id));
+            }
         }
+
+        async function toggleFav(postId) {
+            if (myFavorites.has(postId)) {
+                const { error } = await sb.from('favorites')
+                    .delete()
+                    .eq('post_id', postId)
+                    .eq('user_id', currentUser.id);
+                if (!error) myFavorites.delete(postId);
+            } else {
+                const { error } = await sb.from('favorites')
+                    .insert([{ post_id: postId, user_id: currentUser.id }]);
+                if (!error) myFavorites.add(postId);
+            }
+            await loadPosts();
+        }
+
+        // ===== 未读消息数 =====
+        async function loadUnreadCount() {
+            if (!currentUser) return;
+            const { count, error } = await sb.from('notifications')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', currentUser.id)
+                .eq('is_read', false);
+            if (!error && count > 0) {
+                const badge = document.getElementById('notifBadge');
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.classList.add('show');
+            }
+        }
+
+        // ===== 跳转用户中心 =====
+        function goProfile(tab) {
+            if (tab) {
+                window.location.href = 'profile.html?tab=' + tab;
+            } else {
+                window.location.href = 'profile.html';
+            }
+        }
+
         // ===== 登出 =====
         async function doLogout() {
             if (sb) await sb.auth.signOut();
