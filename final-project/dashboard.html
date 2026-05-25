@@ -299,6 +299,19 @@
             background: #ff9800;
             color: white;
         }
+        .detail-btn {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid #4caf50;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: white;
+            color: #4caf50;
+        }
+        .detail-btn:hover {
+            background: #e8f5e9;
+        }
 
         /* 图片上传样式 */
         .image-upload-area {
@@ -521,6 +534,193 @@
         .gallery-next {
             right: 20px;
         }
+
+        /* 帖子详情页样式 */
+        .post-detail-section {
+            display: none;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .post-detail-section.active {
+            display: block;
+        }
+        .detail-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .back-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            color: #666;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+        }
+        .back-btn:hover {
+            background: #f5f5f5;
+        }
+        .detail-card h2 {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        .detail-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .detail-content {
+            line-height: 1.6;
+            color: #444;
+        }
+        .detail-content h3 {
+            font-size: 1.2rem;
+            color: #333;
+            margin: 1.5rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .expenses-section, .contact-section, .participants-section {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #fafafa;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .expense-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #eee;
+        }
+        .expense-name {
+            font-weight: 600;
+            color: #333;
+        }
+        .expense-amount {
+            color: #e65100;
+            font-weight: 700;
+        }
+        .expense-note {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 0.2rem;
+        }
+        .expense-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .expense-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            margin-top: 1rem;
+            background: white;
+            border-radius: 6px;
+            border: 2px solid #667eea;
+            font-weight: 700;
+        }
+        .per-person-cost {
+            color: #2e7d32;
+            font-size: 1.1rem;
+        }
+        .add-expense-form {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .add-expense-form input {
+            flex: 1;
+            padding: 0.6rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        .add-expense-form button {
+            padding: 0.6rem 1.2rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .add-expense-form button:hover {
+            background: #5568d6;
+        }
+        .contact-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .contact-options select {
+            padding: 0.6rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        .contact-info-display {
+            padding: 1rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #eee;
+            font-size: 1.1rem;
+            color: #333;
+        }
+        .contact-icon {
+            margin-right: 0.5rem;
+        }
+        .participant-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.8rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #eee;
+        }
+        .participant-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        .participant-name {
+            font-weight: 600;
+            color: #333;
+        }
+        .participant-joined {
+            font-size: 0.85rem;
+            color: #888;
+        }
+        .detail-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #f0f0f0;
+        }
         .complete-btn {
             padding: 0.4rem 1.2rem;
             border: none;
@@ -661,6 +861,7 @@
     <div class="nav-tabs">
         <button class="nav-tab active" onclick="switchSection('square')">📋 帖子广场</button>
         <button class="nav-tab" onclick="switchSection('create')">✏️ 发布帖子</button>
+        <button class="nav-tab" onclick="switchSection('detail')" id="detailTab" style="display:none">📄 帖子详情</button>
     </div>
 
     <div class="container">
@@ -803,8 +1004,65 @@
                 </div>
                 <div id="perPersonDisplay" class="per-person" style="display:none"></div>
 
+                <!-- 联系方式 -->
+                <div class="form-group">
+                    <label>联系方式（可选）</label>
+                    <div class="contact-options">
+                        <select id="contactType" onchange="updateContactField()">
+                            <option value="">不公开联系方式</option>
+                            <option value="qq">QQ</option>
+                            <option value="wechat">微信</option>
+                            <option value="phone">电话</option>
+                        </select>
+                        <input type="text" id="contactInfo" placeholder="请输入联系方式" style="display:none; margin-top: 8px;">
+                    </div>
+                    <small style="color:#888;font-size:0.8rem">联系方式仅对参与者可见，保护隐私</small>
+                </div>
+
                 <button class="submit-btn" id="submitBtn" onclick="submitPost()">发布帖子</button>
                 <div id="formToast" class="toast"></div>
+            </div>
+        </div>
+
+        <!-- ===== 帖子详情页 ===== -->
+        <div id="detailSection" class="post-detail-section">
+            <div class="detail-card">
+                <button class="back-btn" onclick="switchSection('square')">← 返回广场</button>
+                <h2 id="detailTitle"></h2>
+                
+                <div class="detail-meta">
+                    <span id="detailAuthor"></span>
+                    <span id="detailType"></span>
+                    <span id="detailStatus"></span>
+                    <span id="detailTime"></span>
+                </div>
+                
+                <div class="detail-content">
+                    <div id="detailDescription"></div>
+                    <div id="detailImages"></div>
+                    
+                    <!-- 行程费用板块 -->
+                    <div class="expenses-section" id="expensesSection">
+                        <h3>📊 行程费用</h3>
+                        <div id="expensesList"></div>
+                        <div id="expensesSummary"></div>
+                        <div id="expensesActions" style="margin-top: 15px;"></div>
+                    </div>
+                    
+                    <!-- 联系方式 -->
+                    <div class="contact-section" id="contactSection">
+                        <h3>📞 联系方式</h3>
+                        <div id="contactInfoDisplay"></div>
+                    </div>
+                    
+                    <!-- 参与者列表 -->
+                    <div class="participants-section">
+                        <h3>👥 参与者</h3>
+                        <div id="participantsList"></div>
+                    </div>
+                </div>
+                
+                <div class="detail-actions" id="detailActions"></div>
             </div>
         </div>
     </div>
@@ -855,17 +1113,32 @@
 
         // ===== 导航切换 =====
         function switchSection(section) {
-            document.querySelectorAll('.nav-tab').forEach((t, i) => {
-                t.classList.toggle('active', (section === 'square' && i === 0) || (section === 'create' && i === 1));
+            // 更新导航标签
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
             });
-            document.getElementById('squareSection').classList.toggle('active', section === 'square');
-            document.getElementById('createSection').classList.toggle('active', section === 'create');
-
+            
+            // 显示对应的section
+            document.getElementById('squareSection').classList.remove('active');
+            document.getElementById('createSection').classList.remove('active');
+            document.getElementById('detailSection').classList.remove('active');
+            
             if (section === 'square') {
+                document.querySelectorAll('.nav-tab')[0].classList.add('active');
+                document.getElementById('squareSection').classList.add('active');
                 loadPosts();
                 resetForm();
-            } else {
+                // 隐藏详情页标签
+                document.getElementById('detailTab').style.display = 'none';
+            } else if (section === 'create') {
+                document.querySelectorAll('.nav-tab')[1].classList.add('active');
+                document.getElementById('createSection').classList.add('active');
                 if (!isEditing) resetForm();
+                // 隐藏详情页标签
+                document.getElementById('detailTab').style.display = 'none';
+            } else if (section === 'detail') {
+                document.getElementById('detailTab').classList.add('active');
+                document.getElementById('detailSection').classList.add('active');
             }
         }
 
@@ -884,6 +1157,12 @@
             document.getElementById('postDeadline').value = '';
             document.getElementById('maxPeople').value = '2';
             document.getElementById('perPersonDisplay').style.display = 'none';
+            // 重置联系方式
+            document.getElementById('contactType').value = '';
+            document.getElementById('contactInfo').value = '';
+            document.getElementById('contactInfo').style.display = 'none';
+            // 清空图片
+            clearAllImages();
             setPostType('buddy');
         }
 
@@ -974,6 +1253,14 @@
             if (!deadlineVal) { showFormToast('请选择截止时间', true); return; }
             postData.deadline = new Date(deadlineVal).toISOString();
 
+            // 联系方式
+            const contactType = document.getElementById('contactType').value;
+            const contactInfo = document.getElementById('contactInfo').value.trim();
+            if (contactType && contactInfo) {
+                postData.contact_type = contactType;
+                postData.contact_info = contactInfo;
+            }
+
             // 确保Storage桶存在
             await ensureStorageBucket();
 
@@ -1046,6 +1333,17 @@
             const deadlineVal2 = document.getElementById('postDeadline').value;
             if (!deadlineVal2) { showFormToast('请选择截止时间', true); return; }
             postData.deadline = new Date(deadlineVal2).toISOString();
+
+            // 联系方式
+            const contactType = document.getElementById('contactType').value;
+            const contactInfo = document.getElementById('contactInfo').value.trim();
+            if (contactType && contactInfo) {
+                postData.contact_type = contactType;
+                postData.contact_info = contactInfo;
+            } else {
+                postData.contact_type = null;
+                postData.contact_info = null;
+            }
 
             // 确保Storage桶存在
             await ensureStorageBucket();
@@ -1257,6 +1555,7 @@
                     } else {
                         buttonHTML = `
                             <div class="post-actions">
+                                <button class="detail-btn" onclick="viewPostDetail(${post.id})">详情</button>
                                 <button class="edit-btn" onclick="editPost(${post.id})">编辑</button>
                                 <button class="delete-btn" onclick="deletePost(${post.id})">删除</button>
                             </div>`;
@@ -1283,7 +1582,8 @@
                         joinBtn = `<button class="join-btn" onclick="joinPost(${post.id})">参与</button>`;
                     }
                     const favBtn = `<button class="fav-btn ${isFav ? 'faved' : ''}" onclick="toggleFav(${post.id})">${isFav ? '★' : '☆'}</button>`;
-                    buttonHTML = `<div class="post-actions">${favBtn}${joinBtn}</div>`;
+                    const detailBtn = `<button class="detail-btn" onclick="viewPostDetail(${post.id})">详情</button>`;
+                    buttonHTML = `<div class="post-actions">${detailBtn}${favBtn}${joinBtn}</div>`;
                 }
 
                 html += `
@@ -1396,6 +1696,17 @@
                 document.getElementById('gbAmount').value = post.total_amount || '';
             }
             document.getElementById('postDeadline').value = post.deadline ? post.deadline.slice(0, 16) : '';
+
+            // 联系方式
+            if (post.contact_type && post.contact_info) {
+                document.getElementById('contactType').value = post.contact_type;
+                document.getElementById('contactInfo').value = post.contact_info;
+                document.getElementById('contactInfo').style.display = 'block';
+            } else {
+                document.getElementById('contactType').value = '';
+                document.getElementById('contactInfo').value = '';
+                document.getElementById('contactInfo').style.display = 'none';
+            }
 
             // 清空现有的图片预览
             clearAllImages();
@@ -1526,6 +1837,22 @@
                 window.location.href = 'profile.html?tab=' + tab;
             } else {
                 window.location.href = 'profile.html';
+            }
+        }
+
+        // ===== 联系方式处理 =====
+        function updateContactField() {
+            const type = document.getElementById('contactType').value;
+            const contactInfoInput = document.getElementById('contactInfo');
+            
+            if (type) {
+                contactInfoInput.style.display = 'block';
+                contactInfoInput.placeholder = type === 'qq' ? '请输入QQ号' : 
+                                              type === 'wechat' ? '请输入微信号' : 
+                                              '请输入电话号码';
+            } else {
+                contactInfoInput.style.display = 'none';
+                contactInfoInput.value = '';
             }
         }
 
@@ -1789,6 +2116,296 @@
                 if (e.key === 'ArrowRight') nextImage();
             }
         });
+
+        // ===== 查看帖子详情 =====
+        async function viewPostDetail(postId) {
+            // 加载帖子详情
+            const { data: post, error } = await sb.from('posts')
+                .select('*')
+                .eq('id', postId)
+                .single();
+            
+            if (error || !post) {
+                alert('加载帖子失败: ' + (error?.message || '未找到'));
+                return;
+            }
+            
+            // 加载费用
+            const { data: expenses } = await sb.from('trip_expenses')
+                .select('*')
+                .eq('post_id', postId)
+                .order('created_at', { ascending: true });
+            
+            // 加载参与者
+            const { data: participants } = await sb.from('participations')
+                .select('user_id, joined_at')
+                .eq('post_id', postId);
+            
+            // 加载参与者用户名
+            const participantUsers = [];
+            if (participants && participants.length > 0) {
+                for (const part of participants) {
+                    const { data: profile } = await sb.from('profiles')
+                        .select('username')
+                        .eq('id', part.user_id)
+                        .single();
+                    participantUsers.push({
+                        user_id: part.user_id,
+                        username: profile?.username || '用户',
+                        joined_at: part.joined_at
+                    });
+                }
+            }
+            
+            // 显示详情页
+            showPostDetail(post, expenses || [], participantUsers);
+        }
+        
+        // ===== 显示帖子详情 =====
+        function showPostDetail(post, expenses, participants) {
+            // 更新导航
+            document.getElementById('detailTab').style.display = 'block';
+            switchSection('detail');
+            
+            // 基本信息
+            document.getElementById('detailTitle').textContent = post.title;
+            document.getElementById('detailAuthor').textContent = `👤 ${post.author_name}`;
+            document.getElementById('detailType').textContent = post.type === 'buddy' ? '👥 找搭子' : '🛒 拼单';
+            document.getElementById('detailStatus').textContent = getStatusText(post.status);
+            document.getElementById('detailTime').textContent = `📅 ${new Date(post.created_at).toLocaleString('zh-CN')}`;
+            
+            // 描述
+            const descEl = document.getElementById('detailDescription');
+            descEl.innerHTML = post.description ? `<p>${escHtml(post.description)}</p>` : '<p style="color:#888">无详细描述</p>';
+            
+            // 图片
+            const imagesEl = document.getElementById('detailImages');
+            if (post.image_urls && post.image_urls.length > 0) {
+                imagesEl.innerHTML = '<h3>🖼️ 图片</h3><div class="post-images-grid">';
+                post.image_urls.forEach((img, index) => {
+                    imagesEl.innerHTML += `<img src="${img}" alt="帖子图片" onclick="viewImageGalleryFromDetail(${post.id})">`;
+                });
+                imagesEl.innerHTML += '</div>';
+            } else {
+                imagesEl.innerHTML = '';
+            }
+            
+            // 行程费用
+            renderExpenses(post, expenses);
+            
+            // 联系方式
+            renderContactInfo(post);
+            
+            // 参与者
+            renderParticipants(post, participants);
+            
+            // 操作按钮
+            renderDetailActions(post);
+        }
+        
+        // ===== 渲染行程费用 =====
+        function renderExpenses(post, expenses) {
+            const expensesList = document.getElementById('expensesList');
+            const expensesSummary = document.getElementById('expensesSummary');
+            const expensesActions = document.getElementById('expensesActions');
+            
+            if (expenses.length === 0) {
+                expensesList.innerHTML = '<p style="color:#888;text-align:center;padding:1rem">暂无费用记录</p>';
+                expensesSummary.innerHTML = '';
+            } else {
+                // 费用列表
+                let total = 0;
+                let html = '';
+                expenses.forEach(expense => {
+                    total += parseFloat(expense.amount);
+                    html += `
+                    <div class="expense-item">
+                        <div>
+                            <div class="expense-name">${escHtml(expense.name)}</div>
+                            ${expense.note ? `<div class="expense-note">${escHtml(expense.note)}</div>` : ''}
+                        </div>
+                        <div class="expense-amount">¥${parseFloat(expense.amount).toFixed(2)}</div>
+                    </div>`;
+                });
+                expensesList.innerHTML = html;
+                
+                // 费用汇总
+                const perPerson = total / post.max_people;
+                expensesSummary.innerHTML = `
+                <div class="expense-total">
+                    <span>💰 总费用：¥${total.toFixed(2)}</span>
+                    <span class="per-person-cost">人均：¥${perPerson.toFixed(2)}</span>
+                </div>`;
+            }
+            
+            // 操作按钮（只有发起人可以添加费用）
+            if (post.user_id === currentUser.id) {
+                expensesActions.innerHTML = `
+                <div class="add-expense-form">
+                    <input type="text" id="expenseName" placeholder="费用项目（如：车费、餐费）">
+                    <input type="number" id="expenseAmount" placeholder="金额" step="0.01" min="0">
+                    <input type="text" id="expenseNote" placeholder="备注（可选）">
+                    <button onclick="addExpense(${post.id})">添加</button>
+                </div>`;
+            } else {
+                expensesActions.innerHTML = '';
+            }
+        }
+        
+        // ===== 添加费用 =====
+        async function addExpense(postId) {
+            const name = document.getElementById('expenseName').value.trim();
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const note = document.getElementById('expenseNote').value.trim();
+            
+            if (!name) {
+                alert('请输入费用项目名称');
+                return;
+            }
+            if (!amount || amount <= 0) {
+                alert('请输入有效的金额');
+                return;
+            }
+            
+            const { error } = await sb.from('trip_expenses').insert([{
+                post_id: postId,
+                name: name,
+                amount: amount,
+                note: note || null
+            }]);
+            
+            if (error) {
+                alert('添加失败: ' + error.message);
+                return;
+            }
+            
+            // 清空表单
+            document.getElementById('expenseName').value = '';
+            document.getElementById('expenseAmount').value = '';
+            document.getElementById('expenseNote').value = '';
+            
+            // 重新加载详情
+            await viewPostDetail(postId);
+        }
+        
+        // ===== 渲染联系方式 =====
+        function renderContactInfo(post) {
+            const contactSection = document.getElementById('contactSection');
+            const contactInfoDisplay = document.getElementById('contactInfoDisplay');
+            
+            // 检查当前用户是否是参与者
+            const isParticipant = myParticipations.has(post.id) || post.user_id === currentUser.id;
+            
+            if (post.contact_type && post.contact_info && isParticipant) {
+                let icon = '';
+                let label = '';
+                switch (post.contact_type) {
+                    case 'qq': icon = '🐧'; label = 'QQ'; break;
+                    case 'wechat': icon = '💬'; label = '微信'; break;
+                    case 'phone': icon = '📱'; label = '电话'; break;
+                }
+                contactInfoDisplay.innerHTML = `
+                <div class="contact-info-display">
+                    <span class="contact-icon">${icon}</span>
+                    <span>${label}：${escHtml(post.contact_info)}</span>
+                </div>`;
+                contactSection.style.display = 'block';
+            } else if (post.contact_type && post.contact_info && !isParticipant) {
+                contactInfoDisplay.innerHTML = '<p style="color:#888;text-align:center">参与后可见联系方式</p>';
+                contactSection.style.display = 'block';
+            } else {
+                contactSection.style.display = 'none';
+            }
+        }
+        
+        // ===== 渲染参与者 =====
+        function renderParticipants(post, participants) {
+            const participantsList = document.getElementById('participantsList');
+            
+            // 添加发起人
+            let allParticipants = [{
+                user_id: post.user_id,
+                username: post.author_name,
+                joined_at: post.created_at,
+                is_creator: true
+            }];
+            
+            // 添加其他参与者
+            if (participants && participants.length > 0) {
+                allParticipants = allParticipants.concat(participants.map(p => ({...p, is_creator: false})));
+            }
+            
+            let html = '';
+            allParticipants.forEach(participant => {
+                const initial = participant.username.charAt(0).toUpperCase();
+                const joinTime = new Date(participant.joined_at).toLocaleString('zh-CN');
+                html += `
+                <div class="participant-item">
+                    <div class="participant-avatar">${initial}</div>
+                    <div>
+                        <div class="participant-name">${escHtml(participant.username)} ${participant.is_creator ? '（发起人）' : ''}</div>
+                        <div class="participant-joined">加入时间：${joinTime}</div>
+                    </div>
+                </div>`;
+            });
+            
+            participantsList.innerHTML = html;
+        }
+        
+        // ===== 渲染详情页操作按钮 =====
+        function renderDetailActions(post) {
+            const detailActions = document.getElementById('detailActions');
+            const isMine = post.user_id === currentUser.id;
+            const isJoined = myParticipations.has(post.id);
+            const isFull = post.current_people >= post.max_people;
+            const isCancelled = post.status === 'cancelled';
+            const isFinished = post.status === 'finished';
+            
+            let html = '';
+            
+            if (isMine) {
+                // 发起人操作
+                html += `<button class="edit-btn" onclick="editPost(${post.id})">编辑帖子</button>`;
+                html += `<button class="delete-btn" onclick="deletePost(${post.id})">删除帖子</button>`;
+            } else if (!isCancelled && !isFinished && !isFull && !isJoined) {
+                // 可以参与
+                html += `<button class="join-btn" onclick="joinPostFromDetail(${post.id})">参与</button>`;
+            } else if (isJoined) {
+                // 已参与
+                html += `<button class="join-btn joined" onclick="leavePostFromDetail(${post.id})">退出</button>`;
+            }
+            
+            detailActions.innerHTML = html;
+        }
+        
+        // ===== 从详情页参与 =====
+        async function joinPostFromDetail(postId) {
+            await joinPost(postId);
+            await viewPostDetail(postId); // 重新加载详情
+        }
+        
+        // ===== 从详情页退出 =====
+        async function leavePostFromDetail(postId) {
+            await leavePost(postId);
+            await viewPostDetail(postId); // 重新加载详情
+        }
+        
+        // ===== 从详情页查看图片画廊 =====
+        function viewImageGalleryFromDetail(postId) {
+            viewImageGallery(postId);
+        }
+        
+        // ===== 获取状态文本 =====
+        function getStatusText(status) {
+            switch (status) {
+                case 'open': return '🟢 招募中';
+                case 'closed': return '🟡 已满员';
+                case 'completed': return '🟠 待确认';
+                case 'finished': return '🔵 已完成';
+                case 'cancelled': return '🔴 已取消';
+                default: return status;
+            }
+        }
 
         // ===== HTML 转义 =====
         function escHtml(str) {

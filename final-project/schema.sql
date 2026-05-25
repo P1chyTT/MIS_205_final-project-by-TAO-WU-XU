@@ -423,3 +423,43 @@ BEGIN
     END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 16. 行程费用表
+CREATE TABLE IF NOT EXISTS trip_expenses (
+    id          SERIAL PRIMARY KEY,
+    post_id     INT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    name        VARCHAR(100) NOT NULL,
+    amount      DECIMAL(10,2) NOT NULL,
+    note        TEXT,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_trip_expenses_post_id ON trip_expenses(post_id);
+
+ALTER TABLE trip_expenses ENABLE ROW LEVEL SECURITY;
+
+-- RLS 策略：所有人都可以查看费用
+CREATE POLICY "任何人都可查看费用" ON trip_expenses
+    FOR SELECT USING (true);
+
+-- RLS 策略：只有帖子发起人可以管理费用
+CREATE POLICY "发起人可管理费用" ON trip_expenses
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM posts 
+            WHERE posts.id = trip_expenses.post_id 
+            AND posts.user_id = auth.uid()
+        )
+    );
+
+-- 17. 联系方式字段
+ALTER TABLE posts 
+ADD COLUMN IF NOT EXISTS contact_type VARCHAR(10),
+ADD COLUMN IF NOT EXISTS contact_info VARCHAR(100);
+
+-- 添加注释
+COMMENT ON COLUMN posts.contact_type IS '联系方式类型：qq/wechat/phone';
+COMMENT ON COLUMN posts.contact_info IS '联系方式内容';
+COMMENT ON COLUMN trip_expenses.name IS '费用项目名称';
+COMMENT ON COLUMN trip_expenses.amount IS '费用金额';
+COMMENT ON COLUMN trip_expenses.note IS '费用备注说明';
