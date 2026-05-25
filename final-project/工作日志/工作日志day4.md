@@ -46,8 +46,12 @@
 - 新增 `trip_expenses` 表存储费用项目
 - 每个费用项目关联到帖子，包含名称、金额、备注
 - 自动计算总费用和人均分摊金额
-- 费用只有帖子发起人可以管理
+- 费用只有帖子发起人可以管理（添加、删除）
 - 参与者可以查看费用明细
+- 前端界面显示清晰的费用列表和汇总信息
+- 支持实时添加和删除费用项目
+- 费用项目包括：交通费、餐饮费、门票费等常见类型
+- 人均费用自动计算，方便参与者了解应付款项
 
 ### 联系方式功能
 - `posts` 表新增 `contact_type` 和 `contact_info` 字段
@@ -60,8 +64,8 @@
 ## 三、代码提交
 
 ```bash
-git add final-project/schema.sql final-project/dashboard.html final-project/migration_add_images.sql
-git commit -m "feat: 添加帖子图片上传功能"
+git add final-project/schema.sql final-project/dashboard.html final-project/migration_add_images.sql final-project/migration_add_expenses_contact.sql
+git commit -m "feat: 添加帖子图片上传、行程费用管理、联系方式功能"
 git push origin feat/image-upload
 ```
 
@@ -113,9 +117,26 @@ ADD COLUMN contact_info VARCHAR(100);
 
 ---
 
-## 六、备注
+## 六、使用场景示例
+
+### 行程费用管理
+1. **场景**：同学A组织从学校到机场的拼车
+2. **过程**：同学A先支付了车费200元
+3. **操作**：同学A在帖子详情页添加费用项目「车费」200元
+4. **效果**：系统自动计算人均费用（如4人拼车，每人50元）
+5. **参与者**：其他参与者看到费用明细和应付款项
+6. **结算**：参与者通过联系方式联系同学A进行AA付款
+
+### 联系方式功能
+1. **场景**：用户发布找学习搭子的帖子
+2. **选择**：用户可以选择填写QQ号作为联系方式
+3. **隐私**：联系方式仅对参与者可见
+4. **沟通**：感兴趣的同学参与后可以看到联系方式并联系
+
+## 七、备注
 
 - 当前代码在 `feat/image-upload` 分支
 - 需要在实际 Supabase 项目中测试完整功能
 - 图片上传需要网络连接，大图片上传可能较慢
 - 联系方式为可选字段，用户可以不填写
+- 费用管理功能需要帖子发起人权限，确保数据安全

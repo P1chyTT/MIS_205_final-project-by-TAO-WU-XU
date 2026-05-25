@@ -624,6 +624,18 @@
             display: flex;
             gap: 0.5rem;
         }
+        .delete-expense-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 0.2rem 0.6rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .delete-expense-btn:hover {
+            background: #cc0000;
+        }
         .expense-total {
             display: flex;
             justify-content: space-between;
@@ -2224,7 +2236,13 @@
                             <div class="expense-name">${escHtml(expense.name)}</div>
                             ${expense.note ? `<div class="expense-note">${escHtml(expense.note)}</div>` : ''}
                         </div>
-                        <div class="expense-amount">¥${parseFloat(expense.amount).toFixed(2)}</div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div class="expense-amount">¥${parseFloat(expense.amount).toFixed(2)}</div>
+                            ${post.user_id === currentUser.id ? 
+                                `<button class="delete-expense-btn" onclick="deleteExpense(${post.id}, ${expense.id})">删除</button>` : 
+                                ''
+                            }
+                        </div>
                     </div>`;
                 });
                 expensesList.innerHTML = html;
@@ -2283,6 +2301,25 @@
             document.getElementById('expenseName').value = '';
             document.getElementById('expenseAmount').value = '';
             document.getElementById('expenseNote').value = '';
+            
+            // 重新加载详情
+            await viewPostDetail(postId);
+        }
+        
+        // ===== 删除费用 =====
+        async function deleteExpense(postId, expenseId) {
+            if (!confirm('确定要删除这个费用项目吗？')) {
+                return;
+            }
+            
+            const { error } = await sb.from('trip_expenses')
+                .delete()
+                .eq('id', expenseId);
+            
+            if (error) {
+                alert('删除失败: ' + error.message);
+                return;
+            }
             
             // 重新加载详情
             await viewPostDetail(postId);
