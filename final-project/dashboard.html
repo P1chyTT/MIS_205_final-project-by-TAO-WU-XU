@@ -1118,6 +1118,9 @@
                 if (editPostId) {
                     await loadPostForEdit(parseInt(editPostId));
                 }
+                
+                // 检查数据库是否支持新功能
+                await checkDatabaseFeatures();
             } catch (e) {
                 window.location.href = 'index.html';
             }
@@ -1267,12 +1270,14 @@
             if (!deadlineVal) { showFormToast('请选择截止时间', true); return; }
             postData.deadline = new Date(deadlineVal).toISOString();
 
-            // 联系方式
-            const contactType = document.getElementById('contactType').value;
-            const contactInfo = document.getElementById('contactInfo').value.trim();
-            if (contactType && contactInfo) {
-                postData.contact_type = contactType;
-                postData.contact_info = contactInfo;
+            // 联系方式（可选字段，仅在数据库支持时添加）
+            if (dbSupportsContact) {
+                const contactType = document.getElementById('contactType').value;
+                const contactInfo = document.getElementById('contactInfo').value.trim();
+                if (contactType && contactInfo) {
+                    postData.contact_type = contactType;
+                    postData.contact_info = contactInfo;
+                }
             }
 
             // 确保Storage桶存在
@@ -1347,15 +1352,17 @@
             if (!deadlineVal2) { showFormToast('请选择截止时间', true); return; }
             postData.deadline = new Date(deadlineVal2).toISOString();
 
-            // 联系方式
-            const contactType = document.getElementById('contactType').value;
-            const contactInfo = document.getElementById('contactInfo').value.trim();
-            if (contactType && contactInfo) {
-                postData.contact_type = contactType;
-                postData.contact_info = contactInfo;
-            } else {
-                postData.contact_type = null;
-                postData.contact_info = null;
+            // 联系方式（可选字段，仅在数据库支持时添加）
+            if (dbSupportsContact) {
+                const contactType = document.getElementById('contactType').value;
+                const contactInfo = document.getElementById('contactInfo').value.trim();
+                if (contactType && contactInfo) {
+                    postData.contact_type = contactType;
+                    postData.contact_info = contactInfo;
+                } else {
+                    postData.contact_type = null;
+                    postData.contact_info = null;
+                }
             }
 
             // 确保Storage桶存在
@@ -1709,15 +1716,17 @@
             }
             document.getElementById('postDeadline').value = post.deadline ? post.deadline.slice(0, 16) : '';
 
-            // 联系方式
-            if (post.contact_type && post.contact_info) {
-                document.getElementById('contactType').value = post.contact_type;
-                document.getElementById('contactInfo').value = post.contact_info;
-                document.getElementById('contactInfo').style.display = 'block';
-            } else {
-                document.getElementById('contactType').value = '';
-                document.getElementById('contactInfo').value = '';
-                document.getElementById('contactInfo').style.display = 'none';
+            // 联系方式（仅在数据库支持时加载）
+            if (dbSupportsContact) {
+                if (post.contact_type && post.contact_info) {
+                    document.getElementById('contactType').value = post.contact_type;
+                    document.getElementById('contactInfo').value = post.contact_info;
+                    document.getElementById('contactInfo').style.display = 'block';
+                } else {
+                    document.getElementById('contactType').value = '';
+                    document.getElementById('contactInfo').value = '';
+                    document.getElementById('contactInfo').style.display = 'none';
+                }
             }
 
             // 清空现有的图片预览（静默模式）
@@ -1868,6 +1877,44 @@
             }
         }
 
+        // ===== 检查数据库功能 =====
+        let dbSupportsContact = true; // 数据库是否支持联系方式字段
+        let dbSupportsExpenses = true; // 数据库是否支持费用功能
+        
+        async function checkDatabaseFeatures() {
+            try {
+                // 检查联系方式字段是否存在
+                const { data: contactCheck, error: contactError } = await sb.from('posts')
+                    .select('contact_type')
+                    .limit(1);
+                
+                if (contactError && contactError.code === '42703') { // 列不存在错误
+                    console.warn('数据库不支持联系方式字段，相关功能将被禁用');
+                    dbSupportsContact = false;
+                    // 隐藏联系方式相关UI
+                    document.querySelector('.form-group:nth-child(7)').style.display = 'none';
+                }
+                
+                // 检查费用表是否存在
+                const { data: expenseCheck, error: expenseError } = await sb.from('trip_expenses')
+                    .select('id')
+                    .limit(1);
+                
+                if (expenseError && expenseError.code === '42P01') { // 表不存在错误
+                    console.warn('数据库不支持费用功能，相关功能将被禁用');
+                    dbSupportsExpenses = false;
+                }
+                
+                console.log('数据库功能检查完成:', { 
+                    supportsContact: dbSupportsContact, 
+                    supportsExpenses: dbSupportsExpenses 
+                });
+                
+            } catch (e) {
+                console.error('检查数据库功能时出错:', e);
+            }
+        }
+        
         // ===== 图片上传处理 =====
         let uploadedImages = []; // 存储已上传的图片URL
         let imageFiles = []; // 存储待上传的文件对象
@@ -2340,6 +2387,12 @@
         function renderContactInfo(post) {
             const contactSection = document.getElementById('contactSection');
             const contactInfoDisplay = document.getElementById('contactInfoDisplay');
+            
+            // 如果数据库不支持联系方式，直接隐藏
+            if (!dbSupportsContact) {
+                contactSection.style.display = 'none';
+                return;
+            }
             
             // 检查当前用户是否是参与者
             const isParticipant = myParticipations.has(post.id) || post.user_id === currentUser.id;
