@@ -299,6 +299,228 @@
             background: #ff9800;
             color: white;
         }
+
+        /* 图片上传样式 */
+        .image-upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            background: #fafafa;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .image-upload-area:hover {
+            border-color: #667eea;
+            background: #f5f7ff;
+        }
+        .upload-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .upload-icon {
+            font-size: 2.5rem;
+            color: #999;
+        }
+        .upload-text {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #666;
+        }
+        .upload-hint {
+            font-size: 0.85rem;
+            color: #999;
+        }
+        .image-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .preview-item {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .preview-item .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(229, 57, 53, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .preview-item .remove-btn:hover {
+            background: #e53935;
+        }
+        .image-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .secondary-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #667eea;
+            border-radius: 6px;
+            background: white;
+            color: #667eea;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .secondary-btn:hover {
+            background: #f0f3ff;
+        }
+        .secondary-btn.danger {
+            border-color: #e53935;
+            color: #e53935;
+        }
+        .secondary-btn.danger:hover {
+            background: #ffebee;
+        }
+        .post-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin: 10px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .post-images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .post-images-grid img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .post-images-grid img:hover {
+            transform: scale(1.05);
+        }
+        .post-image-container {
+            position: relative;
+            margin: 10px 0;
+        }
+        .image-count-badge {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        /* 图片画廊模态框 */
+        .image-gallery-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .gallery-container {
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+        }
+        .gallery-main-img {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 8px;
+        }
+        .gallery-thumbnails {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+        .gallery-thumb {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .gallery-thumb.active {
+            opacity: 1;
+            border: 2px solid #667eea;
+        }
+        .gallery-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .gallery-close:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .gallery-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .gallery-nav:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .gallery-prev {
+            left: 20px;
+        }
+        .gallery-next {
+            right: 20px;
+        }
         .complete-btn {
             padding: 0.4rem 1.2rem;
             border: none;
@@ -532,6 +754,22 @@
                     <label>详细描述</label>
                     <textarea id="postDesc" placeholder="描述你想找什么样的搭子或拼单详情..."></textarea>
                 </div>
+                <div class="form-group">
+                    <label>上传图片（可选）</label>
+                    <div class="image-upload-area" id="imageUploadArea">
+                        <div class="upload-placeholder" onclick="document.getElementById('imageInput').click()">
+                            <div class="upload-icon">📷</div>
+                            <div class="upload-text">点击上传图片</div>
+                            <div class="upload-hint">支持 JPG、PNG 格式，最大 5MB</div>
+                        </div>
+                        <div class="image-preview" id="imagePreview"></div>
+                    </div>
+                    <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
+                    <div class="image-actions" id="imageActions" style="display:none; margin-top: 10px;">
+                        <button type="button" class="secondary-btn" onclick="addMoreImages()">+ 添加更多图片</button>
+                        <button type="button" class="secondary-btn danger" onclick="clearAllImages()">清空所有图片</button>
+                    </div>
+                </div>
 
                 <!-- 找搭子字段 -->
                 <div id="buddyFields" class="buddy-fields show">
@@ -596,6 +834,9 @@
                 const username = user.user_metadata?.username || user.email;
                 document.getElementById('userDisplay').textContent = username;
 
+                // 确保Storage桶存在
+                await ensureStorageBucket();
+                
                 await loadPosts();
                 await loadMyParticipations();
                 await loadMyFavorites();
@@ -733,12 +974,42 @@
             if (!deadlineVal) { showFormToast('请选择截止时间', true); return; }
             postData.deadline = new Date(deadlineVal).toISOString();
 
-            const { error } = await sb.from('posts').insert([postData]);
-            if (error) { showFormToast('发布失败: ' + error.message, true); return; }
+            // 确保Storage桶存在
+            await ensureStorageBucket();
 
+            // 先创建帖子记录
+            const { data: newPost, error: insertError } = await sb.from('posts')
+                .insert([postData])
+                .select('id')
+                .single();
+            
+            if (insertError) { showFormToast('发布失败: ' + insertError.message, true); return; }
 
+            // 上传图片
+            if (imageFiles.length > 0) {
+                const imageUrls = await uploadImagesToStorage(newPost.id);
+                if (imageUrls.length > 0) {
+                    // 更新帖子记录，设置第一张图片为主图，所有图片到数组
+                    const { error: updateError } = await sb.from('posts')
+                        .update({
+                            image_url: imageUrls[0],
+                            image_urls: imageUrls
+                        })
+                        .eq('id', newPost.id);
+                    
+                    if (updateError) {
+                        console.error('更新图片信息失败:', updateError);
+                    }
+                }
+            }
+
+            // 清空表单和图片
+            resetForm();
+            clearAllImages();
+            
             showFormToast('发布成功！', false);
             switchSection('square');
+            await loadPosts();
         }
 
         // ===== 更新帖子 =====
@@ -776,6 +1047,19 @@
             if (!deadlineVal2) { showFormToast('请选择截止时间', true); return; }
             postData.deadline = new Date(deadlineVal2).toISOString();
 
+            // 确保Storage桶存在
+            await ensureStorageBucket();
+
+            // 上传新图片
+            let imageUrls = [];
+            if (imageFiles.length > 0) {
+                imageUrls = await uploadImagesToStorage(postId);
+                if (imageUrls.length > 0) {
+                    postData.image_url = imageUrls[0];
+                    postData.image_urls = imageUrls;
+                }
+            }
+
             const { error } = await sb.from('posts')
                 .update(postData)
                 .eq('id', postId)
@@ -783,8 +1067,13 @@
 
             if (error) { showFormToast('更新失败: ' + error.message, true); return; }
 
+            // 清空表单和图片
+            resetForm();
+            clearAllImages();
+            
             showFormToast('更新成功！', false);
             switchSection('square');
+            await loadPosts();
         }
         // ===== 加载我的参与记录 =====
         async function loadMyParticipations() {
@@ -1010,6 +1299,12 @@
                         <span>📅 ${new Date(post.created_at).toLocaleString('zh-CN')}</span>
                     </div>
                     ${post.description ? `<div class="post-card-desc">${escHtml(post.description)}</div>` : ''}
+                    ${post.image_url ? `
+                    <div class="post-image-container">
+                        <img src="${post.image_url}" alt="帖子图片" class="post-image" onclick="viewImageGallery(${post.id})" style="cursor:pointer">
+                        ${post.image_urls && post.image_urls.length > 1 ? 
+                            `<div class="image-count-badge">+${post.image_urls.length - 1}</div>` : ''}
+                    </div>` : ''}
                     <div class="post-card-footer">
                         <span class="people-badge ${isFull ? 'full' : ''}">👥 ${post.current_people} / ${post.max_people}</span>
                         ${buttonHTML}
@@ -1101,6 +1396,29 @@
                 document.getElementById('gbAmount').value = post.total_amount || '';
             }
             document.getElementById('postDeadline').value = post.deadline ? post.deadline.slice(0, 16) : '';
+
+            // 清空现有的图片预览
+            clearAllImages();
+            
+            // 如果有已有的图片，显示预览
+            if (post.image_urls && post.image_urls.length > 0) {
+                // 将已有的图片URL添加到预览
+                const previewContainer = document.getElementById('imagePreview');
+                previewContainer.innerHTML = '';
+                
+                for (let i = 0; i < post.image_urls.length; i++) {
+                    const imgUrl = post.image_urls[i];
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'preview-item';
+                    previewItem.innerHTML = `
+                        <img src="${imgUrl}" alt="已有图片">
+                        <button class="remove-btn" onclick="removeExistingImage(${post.id}, '${imgUrl}', ${i})">×</button>
+                    `;
+                    previewContainer.appendChild(previewItem);
+                }
+                
+                document.getElementById('imageActions').style.display = 'flex';
+            }
 
             switchSection('create');
             // 清除URL参数
@@ -1211,11 +1529,266 @@
             }
         }
 
+        // ===== 图片上传处理 =====
+        let uploadedImages = []; // 存储已上传的图片URL
+        let imageFiles = []; // 存储待上传的文件对象
+
+        // 处理图片上传
+        async function handleImageUpload(event) {
+            const files = event.target.files;
+            if (!files.length) return;
+
+            // 验证文件大小和类型
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file.size > 5 * 1024 * 1024) {
+                    alert(`文件 ${file.name} 超过5MB限制，请重新选择`);
+                    continue;
+                }
+                if (!file.type.startsWith('image/')) {
+                    alert(`文件 ${file.name} 不是图片格式，请重新选择`);
+                    continue;
+                }
+                imageFiles.push(file);
+            }
+
+            // 预览图片
+            await previewImages();
+            event.target.value = ''; // 清空input以便重新选择
+        }
+
+        // 预览图片
+        async function previewImages() {
+            const previewContainer = document.getElementById('imagePreview');
+            previewContainer.innerHTML = '';
+
+            for (let i = 0; i < imageFiles.length; i++) {
+                const file = imageFiles[i];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const imgUrl = e.target.result;
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'preview-item';
+                    previewItem.innerHTML = `
+                        <img src="${imgUrl}" alt="预览">
+                        <button class="remove-btn" onclick="removeImage(${i})">×</button>
+                    `;
+                    previewContainer.appendChild(previewItem);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // 显示操作按钮
+            if (imageFiles.length > 0) {
+                document.getElementById('imageActions').style.display = 'flex';
+            }
+        }
+
+        // 移除图片
+        function removeImage(index) {
+            imageFiles.splice(index, 1);
+            previewImages();
+            if (imageFiles.length === 0) {
+                document.getElementById('imageActions').style.display = 'none';
+            }
+        }
+
+        // 添加更多图片
+        function addMoreImages() {
+            document.getElementById('imageInput').click();
+        }
+
+        // 清空所有图片
+        function clearAllImages() {
+            if (confirm('确定要清空所有已上传的图片吗？')) {
+                imageFiles = [];
+                uploadedImages = [];
+                document.getElementById('imagePreview').innerHTML = '';
+                document.getElementById('imageActions').style.display = 'none';
+            }
+        }
+
+        // 删除已有的图片
+        async function removeExistingImage(postId, imageUrl, index) {
+            if (!confirm('确定要删除这张图片吗？')) return;
+            
+            try {
+                // 从Storage中删除文件
+                const fileName = imageUrl.split('/').pop();
+                const { error: storageError } = await sb.storage
+                    .from('post-images')
+                    .remove([`post-images/${fileName}`]);
+                
+                if (storageError) {
+                    console.error('删除图片文件失败:', storageError);
+                }
+                
+                // 从数据库记录中移除图片URL
+                const { data: post } = await sb.from('posts')
+                    .select('image_urls')
+                    .eq('id', postId)
+                    .single();
+                
+                if (post && post.image_urls) {
+                    const updatedUrls = [...post.image_urls];
+                    updatedUrls.splice(index, 1);
+                    
+                    const updateData = {
+                        image_urls: updatedUrls
+                    };
+                    
+                    if (index === 0 && updatedUrls.length > 0) {
+                        updateData.image_url = updatedUrls[0];
+                    } else if (updatedUrls.length === 0) {
+                        updateData.image_url = null;
+                    }
+                    
+                    const { error: updateError } = await sb.from('posts')
+                        .update(updateData)
+                        .eq('id', postId);
+                    
+                    if (updateError) {
+                        console.error('更新图片列表失败:', updateError);
+                    }
+                }
+                
+                // 重新加载编辑表单
+                await loadPostForEdit(postId);
+                
+            } catch (error) {
+                console.error('删除图片失败:', error);
+                alert('删除图片失败，请重试');
+            }
+        }
+
+        // 上传图片到Supabase Storage
+        async function uploadImagesToStorage(postId) {
+            if (imageFiles.length === 0) return [];
+
+            const imageUrls = [];
+            
+            for (let i = 0; i < imageFiles.length; i++) {
+                const file = imageFiles[i];
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${postId}_${Date.now()}_${i}.${fileExt}`;
+                const filePath = `post-images/${fileName}`;
+
+                try {
+                    // 上传到Supabase Storage
+                    const { data, error } = await sb.storage
+                        .from('post-images')
+                        .upload(filePath, file);
+
+                    if (error) throw error;
+
+                    // 获取公开URL
+                    const { data: { publicUrl } } = sb.storage
+                        .from('post-images')
+                        .getPublicUrl(filePath);
+
+                    imageUrls.push(publicUrl);
+                } catch (error) {
+                    console.error('图片上传失败:', error);
+                    // 继续上传其他图片
+                }
+            }
+
+            return imageUrls;
+        }
+
+        // 创建Storage桶（如果不存在）
+        async function ensureStorageBucket() {
+            try {
+                // 尝试获取bucket信息
+                const { data, error } = await sb.storage.getBucket('post-images');
+                if (error && error.message.includes('not found')) {
+                    // 创建bucket
+                    const { error: createError } = await sb.storage.createBucket('post-images', {
+                        public: true,
+                        fileSizeLimit: 5242880, // 5MB
+                        allowedMimeTypes: ['image/*']
+                    });
+                    if (createError) {
+                        console.warn('无法创建Storage桶，图片上传功能可能不可用:', createError);
+                    }
+                }
+            } catch (error) {
+                console.warn('Storage桶检查失败:', error);
+            }
+        }
+
         // ===== 登出 =====
         async function doLogout() {
             if (sb) await sb.auth.signOut();
             window.location.href = 'index.html';
         }
+
+        // ===== 图片画廊功能 =====
+        let currentGalleryImages = [];
+        let currentGalleryIndex = 0;
+        
+        // 查看图片画廊
+        function viewImageGallery(postId) {
+            const post = allPosts.find(p => p.id === postId);
+            if (!post || !post.image_urls || post.image_urls.length === 0) return;
+            
+            currentGalleryImages = post.image_urls;
+            currentGalleryIndex = 0;
+            
+            updateGallery();
+            document.getElementById('imageGalleryModal').style.display = 'flex';
+        }
+        
+        // 更新画廊显示
+        function updateGallery() {
+            if (currentGalleryImages.length === 0) return;
+            
+            const mainImg = document.getElementById('galleryMainImg');
+            const thumbContainer = document.getElementById('galleryThumbnails');
+            
+            mainImg.src = currentGalleryImages[currentGalleryIndex];
+            
+            thumbContainer.innerHTML = '';
+            currentGalleryImages.forEach((img, index) => {
+                const thumb = document.createElement('img');
+                thumb.src = img;
+                thumb.className = `gallery-thumb ${index === currentGalleryIndex ? 'active' : ''}`;
+                thumb.onclick = () => {
+                    currentGalleryIndex = index;
+                    updateGallery();
+                };
+                thumbContainer.appendChild(thumb);
+            });
+        }
+        
+        // 画廊导航
+        function prevImage() {
+            if (currentGalleryImages.length === 0) return;
+            currentGalleryIndex = (currentGalleryIndex - 1 + currentGalleryImages.length) % currentGalleryImages.length;
+            updateGallery();
+        }
+        
+        function nextImage() {
+            if (currentGalleryImages.length === 0) return;
+            currentGalleryIndex = (currentGalleryIndex + 1) % currentGalleryImages.length;
+            updateGallery();
+        }
+        
+        // 关闭画廊
+        function closeGallery() {
+            document.getElementById('imageGalleryModal').style.display = 'none';
+        }
+        
+        // 键盘导航
+        document.addEventListener('keydown', (e) => {
+            const modal = document.getElementById('imageGalleryModal');
+            if (modal.style.display === 'flex') {
+                if (e.key === 'Escape') closeGallery();
+                if (e.key === 'ArrowLeft') prevImage();
+                if (e.key === 'ArrowRight') nextImage();
+            }
+        });
 
         // ===== HTML 转义 =====
         function escHtml(str) {
@@ -1224,5 +1797,15 @@
             return div.innerHTML;
         }
     </script>
+    <!-- 图片画廊模态框 -->
+    <div id="imageGalleryModal" class="image-gallery-modal">
+        <button class="gallery-close" onclick="closeGallery()">×</button>
+        <button class="gallery-nav gallery-prev" onclick="prevImage()">‹</button>
+        <div class="gallery-container">
+            <img id="galleryMainImg" class="gallery-main-img" src="" alt="">
+            <div id="galleryThumbnails" class="gallery-thumbnails"></div>
+        </div>
+        <button class="gallery-nav gallery-next" onclick="nextImage()">›</button>
+    </div>
 </body>
 </html>

@@ -44,7 +44,10 @@ CREATE TABLE IF NOT EXISTS posts (
     current_people  INT NOT NULL DEFAULT 1,
     deadline        TIMESTAMPTZ,                          -- 截止时间（超过后自动取消）
     status          VARCHAR(10) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed', 'completed', 'finished', 'cancelled')),
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 图片支持
+    image_url       TEXT,                           -- 帖子主图URL
+    image_urls      TEXT[] DEFAULT '{}'            -- 多图URL数组
 );
 
 -- 2. 参与记录表
@@ -62,6 +65,8 @@ CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id);
 CREATE INDEX IF NOT EXISTS idx_posts_status ON posts(status);
 CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_posts_deadline ON posts(deadline);
+CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id);
 CREATE INDEX IF NOT EXISTS idx_participations_post_id ON participations(post_id);
 CREATE INDEX IF NOT EXISTS idx_participations_user_id ON participations(user_id);
 
