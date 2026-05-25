@@ -2258,7 +2258,40 @@
             
             // 描述
             const descEl = document.getElementById('detailDescription');
-            descEl.innerHTML = post.description ? `<p>${escHtml(post.description)}</p>` : '<p style="color:#888">无详细描述</p>';
+            let descHtml = post.description ? `<p>${escHtml(post.description)}</p>` : '<p style="color:#888">无详细描述</p>';
+            
+            // 添加帖子详细信息
+            descHtml += '<div class="post-details" style="margin-top: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px;">';
+            
+            if (post.type === 'buddy') {
+                // 找搭子详情
+                if (post.location) {
+                    descHtml += `<p><strong>📍 地点：</strong>${escHtml(post.location)}</p>`;
+                }
+                if (post.meet_time) {
+                    const meetTime = new Date(post.meet_time).toLocaleString('zh-CN');
+                    descHtml += `<p><strong>🕐 见面时间：</strong>${meetTime}</p>`;
+                }
+            } else {
+                // 拼单详情
+                if (post.total_amount) {
+                    const perPerson = post.total_amount / post.max_people;
+                    descHtml += `<p><strong>💰 总金额：</strong>¥${parseFloat(post.total_amount).toFixed(2)}</p>`;
+                    descHtml += `<p><strong>👥 人均费用：</strong>¥${perPerson.toFixed(2)}（${post.max_people}人分摊）</p>`;
+                }
+            }
+            
+            // 截止时间
+            if (post.deadline) {
+                const deadlineTime = new Date(post.deadline).toLocaleString('zh-CN');
+                descHtml += `<p><strong>⏰ 截止时间：</strong>${deadlineTime}</p>`;
+            }
+            
+            // 人数信息
+            descHtml += `<p><strong>👤 当前人数：</strong>${post.current_people}/${post.max_people}</p>`;
+            
+            descHtml += '</div>';
+            descEl.innerHTML = descHtml;
             
             // 图片
             const imagesEl = document.getElementById('detailImages');
@@ -2290,6 +2323,9 @@
             const expensesList = document.getElementById('expensesList');
             const expensesSummary = document.getElementById('expensesSummary');
             const expensesActions = document.getElementById('expensesActions');
+            
+            // 检查当前用户是否是参与者
+            const isParticipant = myParticipations.has(post.id) || post.user_id === currentUser.id;
             
             if (expenses.length === 0) {
                 expensesList.innerHTML = '<p style="color:#888;text-align:center;padding:1rem">暂无费用记录</p>';
@@ -2327,7 +2363,6 @@
             }
             
             // 操作按钮（所有参与者都可以添加费用）
-            const isParticipant = myParticipations.has(post.id) || post.user_id === currentUser.id;
             if (isParticipant) {
                 expensesActions.innerHTML = `
                 <div class="add-expense-form">
@@ -2379,8 +2414,49 @@
             document.getElementById('expenseAmount').value = '';
             document.getElementById('expenseNote').value = '';
             
-            // 重新加载详情
+            // 显示成功提示
+            showDetailToast('✅ 费用添加成功！');
+            
+            // 重新加载详情（但保持在当前详情页）
             await viewPostDetail(postId);
+        }
+        
+        // ===== 详情页Toast消息 =====
+        function showDetailToast(message) {
+            // 创建或获取toast元素
+            let toast = document.getElementById('detailToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'detailToast';
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #4caf50;
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 5px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    z-index: 1000;
+                    font-weight: 500;
+                    opacity: 0;
+                    transition: opacity 0.3s;
+                `;
+                document.body.appendChild(toast);
+            }
+            
+            toast.textContent = message;
+            toast.style.opacity = '1';
+            
+            // 3秒后消失
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
         }
         
         // ===== 删除费用 =====
@@ -2397,6 +2473,9 @@
                 alert('删除失败: ' + error.message);
                 return;
             }
+            
+            // 显示成功提示
+            showDetailToast('✅ 费用删除成功！');
             
             // 重新加载详情
             await viewPostDetail(postId);
