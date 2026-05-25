@@ -1760,6 +1760,8 @@
         // ===== 编辑帖子 =====
         async function editPost(postId) {
             await loadPostForEdit(postId);
+            // 切换到创建/编辑页面
+            switchSection('create');
         }
 
         // ===== 删除帖子 =====
@@ -1892,15 +1894,16 @@
                     console.warn('数据库不支持联系方式字段');
                     dbSupportsContact = false;
                     // 显示提示信息，而不是隐藏UI
-                    const contactGroup = document.querySelector('.form-group:nth-child(7)');
+                    const contactGroup = document.querySelector('.form-group:has(#contactType)');
                     if (contactGroup) {
                         const originalHTML = contactGroup.innerHTML;
                         contactGroup.innerHTML = `
-                            <div style="color:#888; padding:10px; background:#f5f5f5; border-radius:5px;">
+                            <div style="color:#888; padding:10px; background:#f5f5f5; border-radius:5px; border:1px solid #ff9800;">
                                 <p><strong>⚠️ 联系方式功能暂不可用</strong></p>
                                 <p style="font-size:0.9rem;">需要运行数据库迁移脚本才能启用此功能。</p>
                                 <p style="font-size:0.8rem;">请在Supabase SQL Editor中运行：<br>
-                                <code>migration_add_expenses_contact.sql</code></p>
+                                <code>final-project/migration_add_expenses_contact.sql</code></p>
+                                <p style="font-size:0.8rem; color:#666;">或者运行完整的 <code>final-project/schema.sql</code></p>
                             </div>
                         `;
                     }

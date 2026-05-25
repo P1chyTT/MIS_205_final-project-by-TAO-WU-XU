@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>功能测试 - 校园搭子拼单系统</title>
+    <style>
+        body { font-family: Arial; padding: 20px; max-width: 800px; margin: 0 auto; }
+        h1 { color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+        .test-section { margin: 30px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .test-title { color: #667eea; margin-top: 0; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .pass { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+        .fail { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+        .warning { background: #fff3e0; color: #ef6c00; border: 1px solid #ffcc80; }
+        .test-btn { 
+            background: #667eea; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 5px; 
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .test-btn:hover { background: #5568d6; }
+        code { background: #f5f5f5; padding: 2px 5px; border-radius: 3px; font-family: monospace; }
+        .sql-box { 
+            background: #272822; 
+            color: #f8f8f2; 
+            padding: 15px; 
+            border-radius: 5px; 
+            font-family: monospace;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        .step { margin: 15px 0; padding-left: 20px; border-left: 3px solid #667eea; }
+    </style>
+</head>
+<body>
+    <h1>📋 校园搭子拼单系统 - 功能测试</h1>
+    
+    <div class="test-section">
+        <h2 class="test-title">🔍 问题诊断</h2>
+        <div class="test-result warning">
+            <strong>当前问题：</strong>新功能（图片上传、行程费用、联系方式）无法使用
+        </div>
+        <div class="test-result fail">
+            <strong>根本原因：</strong>数据库迁移脚本未在Supabase中运行
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2 class="test-title">🚀 解决方案</h2>
+        
+        <div class="step">
+            <h3>步骤1：运行数据库迁移</h3>
+            <p>在Supabase SQL Editor中运行以下SQL：</p>
+            
+            <div class="sql-box">
+-- 方法1：运行完整schema（推荐）
+-- 复制 final-project/schema.sql 的全部内容到SQL Editor并执行
+
+-- 方法2：只运行新功能迁移
+-- 复制以下SQL并执行：
+
+-- 1. 添加联系方式字段
+ALTER TABLE posts 
+ADD COLUMN IF NOT EXISTS contact_type VARCHAR(10),
+ADD COLUMN IF NOT EXISTS contact_info VARCHAR(100);
+
+-- 2. 创建行程费用表
+CREATE TABLE IF NOT EXISTS trip_expenses (
+    id SERIAL PRIMARY KEY,
+    post_id INT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    note TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 3. 创建索引
+CREATE INDEX IF NOT EXISTS idx_trip_expenses_post_id ON trip_expenses(post_id);
+
+-- 4. 启用RLS
+ALTER TABLE trip_expenses ENABLE ROW LEVEL SECURITY;
+
+-- 5. RLS策略：所有参与者都可以管理费用
+CREATE POLICY "参与者可管理费用" ON trip_expenses
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM participations p
+            WHERE p.post_id = trip_expenses.post_id 
+            AND p.user_id = auth.uid()
+        )
+        OR
+        EXISTS (
+            SELECT 1 FROM posts 
+            WHERE posts.id = trip_expenses.post_id 
+            AND posts.user_id = auth.uid()
+        )
+    );
+
+-- 6. 添加图片字段（如果还没有）
+ALTER TABLE posts 
+ADD COLUMN IF NOT EXISTS image_url TEXT,
+ADD COLUMN IF NOT EXISTS image_urls TEXT[] DEFAULT '{}';
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>步骤2：验证迁移成功</h3>
+            <p>运行验证SQL：</p>
+            <div class="sql-box">
+-- 检查联系方式字段
+SELECT column_name, data_type 
+FROM information_schema.columns 
+WHERE table_name = 'posts' 
+AND column_name IN ('contact_type', 'contact_info', 'image_url', 'image_urls');
+
+-- 检查费用表
+SELECT table_name, column_name, data_type
+FROM information_schema.columns 
+WHERE table_name = 'trip_expenses';
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>步骤3：测试功能</h3>
+            <p>迁移后测试以下功能：</p>
+            <button class="test-btn" onclick="window.open('dashboard.html', '_blank')">打开主应用</button>
+            <button class="test-btn" onclick="testEditButton()">测试编辑按钮</button>
+            <button class="test-btn" onclick="testContactFunction()">测试联系方式</button>
+            <button class="test-btn" onclick="testExpenseFunction()">测试费用功能</button>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2 class="test-title">✅ 功能清单（Day4要求）</h2>
+        
+        <div class="test-result">
+            <h4>1. 图片上传功能</h4>
+            <p>状态：<span id="imageStatus">待测试</span></p>
+            <p>要求：发布/编辑帖子时支持图片上传</p>
+        </div>
+        
+        <div class="test-result">
+            <h4>2. 行程费用管理</h4>
+            <p>状态：<span id="expenseStatus">待测试</span></p>
+            <p>要求：所有参与者都可以添加/删除费用，自动计算人均</p>
+        </div>
+        
+        <div class="test-result">
+            <h4>3. 联系方式功能</h4>
+            <p>状态：<span id="contactStatus">待测试</span></p>
+            <p>要求：可选填写QQ/微信/电话，仅对参与者可见</p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2 class="test-title">📝 工作日志Day4要求</h2>
+        <p>根据工作日志Day4，需要实现以下三个功能：</p>
+        <ol>
+            <li><strong>帖子图片上传功能</strong> - 支持拖拽上传，多图预览</li>
+            <li><strong>行程费用管理功能</strong> - 参与者可添加费用，AA制分摊</li>
+            <li><strong>联系方式功能</strong> - 可选联系方式，保护隐私</li>
+        </ol>
+        <p>所有功能代码已在 <code>dashboard.html</code> 中实现，等待数据库迁移。</p>
+    </div>
+    
+    <script>
+        function testEditButton() {
+            alert('编辑按钮功能测试：\n1. 确保已登录\n2. 在帖子广场找到自己发布的帖子\n3. 点击"编辑"按钮\n4. 应该跳转到编辑页面并加载帖子数据');
+        }
+        
+        function testContactFunction() {
+            alert('联系方式功能测试：\n1. 发布新帖子时，应该能看到联系方式选项\n2. 可以选择QQ/微信/电话\n3. 填写联系方式后发布\n4. 在帖子详情页，参与者应该能看到联系方式');
+        }
+        
+        function testExpenseFunction() {
+            alert('费用功能测试：\n1. 发布一个拼单帖子\n2. 在帖子详情页，应该有"行程费用"板块\n3. 参与者可以添加费用项目\n4. 系统自动计算总费用和人均费用');
+        }
+        
+        // 检查本地存储中是否有Supabase配置
+        function checkLocalStorage() {
+            const sbUrl = localStorage.getItem('sbUrl');
+            const sbKey = localStorage.getItem('sbKey');
+            
+            if (sbUrl && sbKey) {
+                document.getElementById('imageStatus').textContent = '配置正常';
+                document.getElementById('expenseStatus').textContent = '配置正常';
+                document.getElementById('contactStatus').textContent = '配置正常';
+            } else {
+                document.getElementById('imageStatus').textContent = '需要登录';
+                document.getElementById('expenseStatus').textContent = '需要登录';
+                document.getElementById('contactStatus').textContent = '需要登录';
+            }
+        }
+        
+        // 页面加载时检查
+        window.onload = checkLocalStorage;
+    </script>
+</body>
+</html>
