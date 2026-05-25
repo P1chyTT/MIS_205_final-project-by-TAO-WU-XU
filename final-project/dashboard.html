@@ -1139,13 +1139,15 @@
                 document.querySelectorAll('.nav-tab')[0].classList.add('active');
                 document.getElementById('squareSection').classList.add('active');
                 loadPosts();
-                resetForm();
+                // 切换到广场时静默重置表单，不询问图片
+                resetForm(true);
                 // 隐藏详情页标签
                 document.getElementById('detailTab').style.display = 'none';
             } else if (section === 'create') {
                 document.querySelectorAll('.nav-tab')[1].classList.add('active');
                 document.getElementById('createSection').classList.add('active');
-                if (!isEditing) resetForm();
+                // 切换到创建页面时，如果不是编辑模式，静默重置
+                if (!isEditing) resetForm(true);
                 // 隐藏详情页标签
                 document.getElementById('detailTab').style.display = 'none';
             } else if (section === 'detail') {
@@ -1155,7 +1157,7 @@
         }
 
         // ===== 重置表单 =====
-        function resetForm() {
+        function resetForm(silent = false) {
             isEditing = false;
             editingPost = null;
             document.getElementById('formTitle').textContent = '发布新帖子';
@@ -1173,8 +1175,8 @@
             document.getElementById('contactType').value = '';
             document.getElementById('contactInfo').value = '';
             document.getElementById('contactInfo').style.display = 'none';
-            // 清空图片
-            clearAllImages();
+            // 清空图片（静默模式，不询问）
+            clearAllImages(silent);
             setPostType('buddy');
         }
 
@@ -1302,9 +1304,8 @@
                 }
             }
 
-            // 清空表单和图片
-            resetForm();
-            clearAllImages();
+            // 清空表单和图片（静默模式）
+            resetForm(true);
             
             showFormToast('发布成功！', false);
             switchSection('square');
@@ -1377,9 +1378,8 @@
 
             if (error) { showFormToast('更新失败: ' + error.message, true); return; }
 
-            // 清空表单和图片
-            resetForm();
-            clearAllImages();
+            // 清空表单和图片（静默模式）
+            resetForm(true);
             
             showFormToast('更新成功！', false);
             switchSection('square');
@@ -1720,8 +1720,8 @@
                 document.getElementById('contactInfo').style.display = 'none';
             }
 
-            // 清空现有的图片预览
-            clearAllImages();
+            // 清空现有的图片预览（静默模式）
+            clearAllImages(true);
             
             // 如果有已有的图片，显示预览
             if (post.image_urls && post.image_urls.length > 0) {
@@ -1939,7 +1939,17 @@
         }
 
         // 清空所有图片
-        function clearAllImages() {
+        function clearAllImages(silent = false) {
+            // 如果静默模式或者没有图片，直接清空
+            if (silent || imageFiles.length === 0) {
+                imageFiles = [];
+                uploadedImages = [];
+                document.getElementById('imagePreview').innerHTML = '';
+                document.getElementById('imageActions').style.display = 'none';
+                return;
+            }
+            
+            // 非静默模式且有图片时，询问用户
             if (confirm('确定要清空所有已上传的图片吗？')) {
                 imageFiles = [];
                 uploadedImages = [];
