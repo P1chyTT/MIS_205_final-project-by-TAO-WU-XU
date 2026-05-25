@@ -1305,7 +1305,12 @@
                     
                     if (updateError) {
                         console.error('更新图片信息失败:', updateError);
+                        showFormToast('⚠️ 图片上传成功，但保存信息时出错', true);
+                    } else {
+                        showFormToast(`✅ 成功保存 ${imageUrls.length} 张图片`, false);
                     }
+                } else {
+                    showFormToast('❌ 图片上传失败，请重试', true);
                 }
             }
 
@@ -2098,6 +2103,8 @@
             if (imageFiles.length === 0) return [];
 
             const imageUrls = [];
+            let successCount = 0;
+            let failCount = 0;
             
             for (let i = 0; i < imageFiles.length; i++) {
                 const file = imageFiles[i];
@@ -2119,10 +2126,23 @@
                         .getPublicUrl(filePath);
 
                     imageUrls.push(publicUrl);
+                    successCount++;
+                    
+                    console.log(`图片上传成功: ${fileName}`, publicUrl);
                 } catch (error) {
-                    console.error('图片上传失败:', error);
+                    console.error(`图片上传失败 [${file.name}]:`, error);
+                    failCount++;
                     // 继续上传其他图片
                 }
+            }
+            
+            // 显示上传结果
+            if (successCount > 0 && failCount === 0) {
+                showFormToast(`✅ 成功上传 ${successCount} 张图片`, false);
+            } else if (successCount > 0 && failCount > 0) {
+                showFormToast(`⚠️ 上传完成：成功 ${successCount} 张，失败 ${failCount} 张`, true);
+            } else if (failCount > 0) {
+                showFormToast(`❌ 图片上传全部失败，请检查网络和文件格式`, true);
             }
 
             return imageUrls;
