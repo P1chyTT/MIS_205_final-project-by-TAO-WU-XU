@@ -1309,17 +1309,34 @@
                     } else {
                         showFormToast(`✅ 成功保存 ${imageUrls.length} 张图片`, false);
                     }
-                } else {
+                } else if (imageFiles.length > 0) {
+                    // 有图片但上传失败
                     showFormToast('❌ 图片上传失败，请重试', true);
                 }
             }
 
+            // 显示详细的成功提示
+            let successMessage = '✅ 帖子发布成功！';
+            let imageInfo = '';
+            if (imageFiles.length > 0) {
+                imageInfo = `\n📸 包含 ${imageFiles.length} 张图片`;
+                successMessage += imageInfo;
+            }
+            
+            // 使用确认对话框让用户选择下一步
+            const userChoice = confirm(successMessage + '\n\n点击"确定"查看帖子详情\n点击"取消"返回帖子广场');
+            
             // 清空表单和图片（静默模式）
             resetForm(true);
             
-            showFormToast('发布成功！', false);
-            switchSection('square');
-            await loadPosts();
+            if (userChoice) {
+                // 用户选择查看详情
+                await viewPostDetail(newPost.id);
+            } else {
+                // 用户选择返回广场
+                switchSection('square');
+                await loadPosts();
+            }
         }
 
         // ===== 更新帖子 =====
@@ -1410,14 +1427,33 @@
                 .eq('id', postId)
                 .eq('user_id', currentUser.id);
 
-            if (error) { showFormToast('更新失败: ' + error.message, true); return; }
+            if (error) { 
+                showFormToast('更新失败: ' + error.message, true); 
+                return; 
+            }
 
+            // 显示详细的成功提示
+            let successMessage = '✅ 帖子更新成功！';
+            let imageInfo = '';
+            if (finalImageUrls.length > 0) {
+                imageInfo = `\n📸 包含 ${finalImageUrls.length} 张图片`;
+                successMessage += imageInfo;
+            }
+            
+            // 使用确认对话框让用户选择下一步
+            const userChoice = confirm(successMessage + '\n\n点击"确定"查看更新后的详情\n点击"取消"返回帖子广场');
+            
             // 清空表单和图片（静默模式）
             resetForm(true);
             
-            showFormToast('更新成功！', false);
-            switchSection('square');
-            await loadPosts();
+            if (userChoice) {
+                // 用户选择查看详情
+                await viewPostDetail(postId);
+            } else {
+                // 用户选择返回广场
+                switchSection('square');
+                await loadPosts();
+            }
         }
         // ===== 加载我的参与记录 =====
         async function loadMyParticipations() {
@@ -2136,13 +2172,16 @@
                 }
             }
             
-            // 显示上传结果
+            // 显示上传结果（使用alert确保用户看到）
             if (successCount > 0 && failCount === 0) {
-                showFormToast(`✅ 成功上传 ${successCount} 张图片`, false);
+                // 全部成功 - 在后续的发布/更新提示中显示
+                console.log(`✅ 成功上传 ${successCount} 张图片`);
             } else if (successCount > 0 && failCount > 0) {
-                showFormToast(`⚠️ 上传完成：成功 ${successCount} 张，失败 ${failCount} 张`, true);
+                // 部分成功 - 立即提示
+                alert(`⚠️ 图片上传完成\n成功: ${successCount} 张\n失败: ${failCount} 张\n\n失败的图片可能是格式不支持或文件过大（最大5MB）`);
             } else if (failCount > 0) {
-                showFormToast(`❌ 图片上传全部失败，请检查网络和文件格式`, true);
+                // 全部失败 - 立即提示
+                alert(`❌ 图片上传全部失败！\n\n可能的原因：\n1. 网络连接问题\n2. 文件格式不支持（仅支持JPG、PNG等图片格式）\n3. 文件过大（最大5MB）\n4. Storage桶权限问题`);
             }
 
             return imageUrls;
