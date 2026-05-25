@@ -2238,7 +2238,7 @@
                         </div>
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                             <div class="expense-amount">¥${parseFloat(expense.amount).toFixed(2)}</div>
-                            ${post.user_id === currentUser.id ? 
+                            ${isParticipant ? 
                                 `<button class="delete-expense-btn" onclick="deleteExpense(${post.id}, ${expense.id})">删除</button>` : 
                                 ''
                             }
@@ -2256,8 +2256,9 @@
                 </div>`;
             }
             
-            // 操作按钮（只有发起人可以添加费用）
-            if (post.user_id === currentUser.id) {
+            // 操作按钮（所有参与者都可以添加费用）
+            const isParticipant = myParticipations.has(post.id) || post.user_id === currentUser.id;
+            if (isParticipant) {
                 expensesActions.innerHTML = `
                 <div class="add-expense-form">
                     <input type="text" id="expenseName" placeholder="费用项目（如：车费、餐费）">

@@ -442,9 +442,15 @@ ALTER TABLE trip_expenses ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "任何人都可查看费用" ON trip_expenses
     FOR SELECT USING (true);
 
--- RLS 策略：只有帖子发起人可以管理费用
-CREATE POLICY "发起人可管理费用" ON trip_expenses
+-- RLS 策略：所有参与者都可以管理费用
+CREATE POLICY "参与者可管理费用" ON trip_expenses
     FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM participations p
+            WHERE p.post_id = trip_expenses.post_id 
+            AND p.user_id = auth.uid()
+        )
+        OR
         EXISTS (
             SELECT 1 FROM posts 
             WHERE posts.id = trip_expenses.post_id 
