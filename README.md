@@ -1,77 +1,161 @@
-# DMDB 2026 Spring — Codespace Lab Environment
+# 校园搭子拼单系统
 
-> Ships dual provider: Kimi For Coding (test) + Volcengine Ark Coding Plan (production).
-> Default is Kimi. Switch to Volcengine before semester start.
+> **课程**：MIS 205 — Data Management and Database (Spring 2026)  
+> **项目类型**：期末项目 Part 2
 
-## Before week 9 — install VS Code Desktop (one-time, ~10 min)
+---
 
-Do this on your laptop **before** the first lab. Don't burn class time on a download.
+## 项目简介
 
-1. Install **VS Code Desktop**: <https://code.visualstudio.com>
-   - macOS / Windows / Linux all supported. ~100 MB.
-   - In China, download direct from code.visualstudio.com (Microsoft CDN works);
-     if slow, try the "System Installer" link or wait off-peak.
-2. Open VS Code → click the **Extensions** icon (left sidebar, four squares)
-   → search **"GitHub Codespaces"** → Install the official extension by GitHub.
-3. ⌘⇧P (Ctrl+Shift+P on Win/Linux) → type `Codespaces: Sign In` → browser
-   opens → log in with your GitHub account → return to VS Code.
+一个面向在校大学生的"找搭子+拼单"平台。用户可以发布帖子寻找一起学习/运动/吃饭的搭子，也可以发起拼单（如外卖拼单、团购凑单）并自动计算人均费用。
 
-Done. Your laptop is now ready for every lab in weeks 9–16.
+---
 
-## First-launch checklist (~5 min)
+## 技术栈
 
-### 1. Connect to your Codespace
-In VS Code Desktop:
-- ⌘⇧P → `Codespaces: Create New Codespace…` (first time)
-  → pick this repo → branch `main` → machine `2-core`.
-- Or, if you already have one: `Codespaces: Connect to Codespace…` → pick from list.
+- **前端**：HTML + CSS + JavaScript
+- **后端**：Supabase（BaaS）
+- **认证**：Supabase Auth
+- **数据库**：PostgreSQL on Supabase
+- **存储**：Supabase Storage
+- **版本控制**：Git + GitHub
 
-VS Code reattaches to the cloud VM. Wait ~60 s for `setup.sh` to install
-Pi, OpenCode, Claude Code, uv, and pre-build the lab venv. Banner prints
-`DMDB Codespace ready.` when done.
+---
 
-### 2. Paste your API key
-- Click `.env` in the file tree (left side)
-- Paste `KIMI_API_KEY=sk-kimi-...` (or `ARK_API_KEY=<volcengine-key>`)
-- Save: ⌘S / Ctrl+S
+## 项目文件结构
 
-### 3. Open a NEW terminal tab
-**Terminal menu → New Terminal** (or `` Ctrl+Shift+` ``). The new shell auto-loads
-`.env` via `~/.bashrc` and exports `ANTHROPIC_AUTH_TOKEN` for Claude Code. The
-old terminal still has empty env vars — don't reuse it.
-
-### 4. Verify
-```bash
-bash scripts/verify.sh
 ```
-Expect: ✓ Pi, ✓ OpenCode, ✓ Claude Code, ✓ Postgres, ✓ provider key, ✓ end-to-end.
-
-### 5. Try each agent
-```bash
-opencode run "Write a SQL query for top 5 students by GPA from students(id,name,gpa)"
-pi       "Same question."
-claude   "Same question."
-```
-
-## Switching providers
-
-**OpenCode**: type `/models` in TUI
-
-**Pi**: `Ctrl+L` cycles, OR edit `~/.pi/agent/settings.json` `defaultProvider` to `volcengine-coding-plan`
-
-**Claude Code**: copy the right template, then open a fresh terminal so bashrc re-exports the right token:
-```bash
-cp .claude/settings.kimi.json       ~/.claude/settings.json   # Kimi
-cp .claude/settings.volcengine.json ~/.claude/settings.json   # Volcengine
+.
+├── README.md                           # 项目说明（本文件）
+├── final-project/                      # 项目主文件夹
+│   ├── index.html                      # 登录注册页面
+│   ├── dashboard.html                  # 主页（帖子广场、发布/编辑/删除）
+│   ├── profile.html                    # 用户中心
+│   ├── spec.md                         # 项目规格说明书
+│   ├── schema.sql                      # 数据库 schema
+│   ├── migration_add_deadline.sql      # 截止时间功能迁移
+│   ├── migration_add_images.sql        # 图片功能迁移
+│   ├── migration_add_expenses_contact.sql # 费用和联系方式迁移
+│   ├── 提交材料清单.md                 # 提交材料清单
+│   ├── report.md                       # 报告框架
+│   ├── 演示幻灯片大纲.md               # 演示大纲
+│   ├── PR_DESCRIPTION_image_upload.md  # PR 描述
+│   ├── test_image_upload.html          # 测试页面
+│   └── 工作日志/                       # 开发日志
+│       ├── 工作日志day1.md
+│       ├── 工作日志day2.md
+│       ├── 工作日志day3.md
+│       └── 工作日志day4.md
+├── course-materials/                   # 课程原始材料
+│   ├── lab-data/
+│   ├── scripts/
+│   ├── skills/
+│   ├── 期末项目说明/
+│   └── dmdb-codespace-scaffold.sh
+└── ...
 ```
 
-## If something breaks
+---
 
-- **Codespace stuck on "Setting up remote connection..."** → ⌘⇧P → `Codespaces: Stop Current Codespace`, wait 30s, then `Connect to Codespace` again.
-- **`verify.sh` fails on the provider key** → did you open a NEW terminal after pasting `.env`? The old one has empty env vars. Close it, open a fresh one, retry.
-- **Browser fallback** (only if VS Code Desktop is unavailable on a borrowed machine): on github.com, repo → Code → Codespaces → resume your existing one. The browser path works but is more sensitive to network drops; prefer Desktop.
+## 核心功能
 
-## Help
-- Volcengine docs: <https://www.volcengine.com/docs/82379/1925114?lang=zh>
-- OpenCode docs: <https://opencode.ai/docs>
-- Pi docs: <https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent>
+### 用户系统
+- ✅ 用户注册/登录（Supabase Auth）
+- ✅ 用户个人中心
+- ✅ 个人资料修改
+
+### 帖子管理
+- ✅ 发布帖子（找搭子/拼单）
+- ✅ 查看帖子列表（帖子广场）
+- ✅ 编辑帖子
+- ✅ 删除帖子
+- ✅ 帖子筛选功能
+- ✅ 图片上传功能
+
+### 参与系统
+- ✅ 参与帖子
+- ✅ 退出参与
+- ✅ 行程费用管理
+- ✅ 联系方式功能
+
+### 订单流程
+- ✅ 订单完成流程
+- ✅ 参与者确认完成
+- ✅ 截止时间与自动取消
+
+### 通知系统
+- ✅ 有人参与通知
+- ✅ 有人退出通知
+- ✅ 组队成功通知
+- ✅ 拼单账单通知
+- ✅ 订单完成通知
+- ✅ 帖子过期通知
+
+### 用户中心
+- ✅ 我的发帖
+- ✅ 我的参与
+- ✅ 我的收藏
+- ✅ 消息中心
+- ✅ 数据统计
+
+---
+
+## 数据库表结构
+
+| 表名 | 说明 |
+|------|------|
+| profiles | 用户公开信息 |
+| posts | 帖子信息 |
+| participations | 参与记录 |
+| favorites | 收藏记录 |
+| notifications | 消息通知 |
+| trip_expenses | 行程费用 |
+
+---
+
+## GitHub 工作流
+
+### 分支
+- `main` — 主分支
+- `auth` — 认证功能分支
+- `feat/auth` — 认证功能分支
+- `feat/image-upload` — 图片上传功能分支
+- `feat/join-manage` — 参与管理功能分支
+- `feat/order-crud` — 订单 CRUD 功能分支
+
+### Pull Requests
+- PR：添加帖子图片上传功能（从 feat/image-upload 到 main）
+
+---
+
+## 如何运行
+
+1. 在 Supabase 上创建项目
+2. 运行 `final-project/schema.sql` 初始化数据库
+3. 运行迁移脚本（如果需要）
+4. 在 `index.html` 中配置 Supabase URL 和 Anon Key
+5. 用浏览器打开 `index.html`
+
+---
+
+## 提交材料
+
+- [x] 项目代码
+- [x] spec.md
+- [x] schema.sql
+- [x] 工作日志
+- [ ] PDF 报告
+- [ ] 演示幻灯片
+
+---
+
+## 小组成员
+
+- [填写姓名] - [填写学号]
+- [填写姓名] - [填写学号]（如果有）
+
+---
+
+## 课程材料
+
+原始课程材料请查看 `course-materials/` 文件夹。

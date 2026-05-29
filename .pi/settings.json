@@ -1,6 +1,6 @@
 {
-  "defaultProvider": "kimi-direct",
-  "defaultModel": "kimi-for-coding",
+  "defaultProvider": "volcengine-coding-plan",
+  "defaultModel": "doubao-seed-2.0-code",
   "defaultThinkingLevel": "medium",
   "theme": "dark",
   "skills": [
